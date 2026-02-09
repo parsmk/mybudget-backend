@@ -4,7 +4,7 @@ import { drizzle } from "drizzle-orm/libsql";
 import { authRouter } from "./routes/authRoutes";
 
 // Config
-const PORT = 3000;
+const PORT = 5000;
 const app = express();
 
 // MiddleWare
@@ -17,5 +17,5 @@ app.use("/", authRouter);
 export const db = drizzle(process.env.DATABASE_URL!);
 
 app.listen(PORT, () => {
-  console.log(`Server running on ${PORT}: http//localhost:3000`);
+  console.log(`Server running on port ${PORT}: http://localhost:${PORT}`);
 });
