@@ -1,13 +1,10 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import { eq } from "drizzle-orm";
 
 import { userSchema } from "../models/user";
 import { db } from "..";
-
-import { ROUTEMAP } from "./map";
-import { computeMS } from "../utils/computeMS";
+import { signTokens } from "../utils/signTokens";
 
 export const authRouter = Router();
 
@@ -15,37 +12,44 @@ authRouter.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!(email && password))
-      return res.status(400).json({ auth: "Need username and password!" });
+      return res.status(400).json({ login: "Need username and password!" });
 
     const user = (
       await db.select().from(userSchema).where(eq(userSchema.email, email))
     ).at(0);
     const valid = user && (await bcrypt.compare(password, user.password_hash));
 
-    if (!valid) return res.status(400).json({ auth: "Invalid credentials." });
+    if (!valid) return res.status(400).json({ login: "Invalid credentials." });
 
-    const accessToken = jwt.sign(
-      { id: user.id, email },
-      process.env.ACCESS_SECRET!,
-      { expiresIn: "15m" },
-    );
-    const refreshToken = jwt.sign(
-      { id: user.id, email },
-      process.env.REFRESH_SECRET!,
-      { expiresIn: "1d" },
-    );
-
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV !== "development",
-      sameSite: process.env.NODE_ENV === "development" ? "lax" : "none",
-      path: ROUTEMAP.AUTH.REFRESH,
-      maxAge: computeMS([1, "days"]),
+    return res.status(200).json({
+      access_token: signTokens(res, { id: user.id, email: user.email }),
     });
-
-    return res.status(200).json({ access_token: accessToken });
   } catch (error) {
-    console.log(error);
-    return res.status(500);
+    console.error(error);
+    return res.status(500).json({ login: "Internal Error!" });
+  }
+});
+
+authRouter.post("/signup", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!(email && password))
+      return res.status(400).json({ signup: "Need username and password!" });
+
+    const [newUser] = await db
+      .insert(userSchema)
+      .values({ email: email, password_hash: await bcrypt.hash(password, 10) })
+      .returning();
+
+    if (!newUser)
+      return res.status(500).json({ signup: "Error creating new user!" });
+
+    return res.status(201).json({
+      access_token: signTokens(res, { id: newUser.id, email: email.id }),
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ signup: "Internal Error!" });
   }
 });
