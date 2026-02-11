@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken";
 import { Response } from "express";
 
-import { ROUTEMAP } from "../routes/_map";
 import { computeMS } from "./computeMS";
 import "dotenv/config";
 
@@ -20,13 +19,22 @@ export const signTokens = (
     { expiresIn: "1d" },
   );
 
+  const isSecure = process.env.NODE_ENV !== "development";
+  const isSameSite = process.env.NODE_ENV === "development" ? "lax" : "none";
+
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV !== "development",
-    sameSite: process.env.NODE_ENV === "development" ? "lax" : "none",
-    path: ROUTEMAP.AUTH.REFRESH,
+    secure: isSecure,
+    sameSite: isSameSite,
     maxAge: computeMS([1, "days"]),
   });
 
-  return accessToken;
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    secure: isSecure,
+    sameSite: isSameSite,
+    maxAge: computeMS([15, "mins"]),
+  });
+
+  return [accessToken, refreshToken];
 };

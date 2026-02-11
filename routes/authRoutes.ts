@@ -21,9 +21,11 @@ authRouter.post("/login", async (req, res) => {
 
     if (!valid) return res.status(401).json({ login: "Invalid credentials." });
 
-    return res.status(200).json({
-      access_token: signTokens(res, { id: user.id, email: user.email }),
+    const [accessToken, refreshToken] = signTokens(res, {
+      id: user.id,
+      email: user.email,
     });
+    return res.status(200).json({ accessToken, refreshToken });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ login: "Internal Error!" });
@@ -45,9 +47,7 @@ authRouter.post("/signup", async (req, res) => {
     if (!newUser)
       return res.status(500).json({ signup: "Error creating new user!" });
 
-    return res.status(201).json({
-      access_token: signTokens(res, { id: newUser.id, email: newUser.email }),
-    });
+    return res.status(201).json({ id: newUser.id, email: newUser.email });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ signup: "Internal Error!" });
