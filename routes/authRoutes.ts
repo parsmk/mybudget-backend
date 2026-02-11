@@ -3,8 +3,8 @@ import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 
 import { userSchema } from "../models/user";
-import { db } from "..";
 import { signTokens } from "../utils/signTokens";
+import { db } from "../db";
 
 export const authRouter = Router();
 
@@ -19,7 +19,7 @@ authRouter.post("/login", async (req, res) => {
     ).at(0);
     const valid = user && (await bcrypt.compare(password, user.password_hash));
 
-    if (!valid) return res.status(400).json({ login: "Invalid credentials." });
+    if (!valid) return res.status(401).json({ login: "Invalid credentials." });
 
     return res.status(200).json({
       access_token: signTokens(res, { id: user.id, email: user.email }),
@@ -35,7 +35,7 @@ authRouter.post("/signup", async (req, res) => {
     const { email, password } = req.body;
 
     if (!(email && password))
-      return res.status(400).json({ signup: "Need username and password!" });
+      return res.status(400).json({ signup: "Need email and password!" });
 
     const [newUser] = await db
       .insert(userSchema)
@@ -46,7 +46,7 @@ authRouter.post("/signup", async (req, res) => {
       return res.status(500).json({ signup: "Error creating new user!" });
 
     return res.status(201).json({
-      access_token: signTokens(res, { id: newUser.id, email: email.id }),
+      access_token: signTokens(res, { id: newUser.id, email: newUser.email }),
     });
   } catch (error) {
     console.error(error);
