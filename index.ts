@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 import { authRouter } from "./routes/authRoutes";
 
@@ -7,8 +8,9 @@ import { authRouter } from "./routes/authRoutes";
 const PORT = 5000;
 const app = express();
 
-// MiddleWare
+// Middleware
 app.use(express.json());
+app.use(cookieParser());
 app.use(
   cors({
     origin: "http://localhost:3000",
