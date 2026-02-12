@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 
 import { userSchema } from "../models/user";
-import { signTokens } from "../utils/signTokens";
+import { signAccessToken, signTokens, verifyToken } from "../utils/auth";
 import { db } from "../db";
 
 export const authRouter = Router();
@@ -51,5 +51,24 @@ authRouter.post("/signup", async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ signup: "Internal Error!" });
+  }
+});
+
+authRouter.post("/refresh", async (req, res) => {
+  const token = req.cookies["refreshToken"];
+  if (!token) return res.sendStatus(401);
+
+  try {
+    const payload = verifyToken("refresh", token);
+
+    const accessToken = signAccessToken(res, {
+      id: payload.id,
+      email: payload.email,
+    });
+
+    return res.status(200).json({ accessToken });
+  } catch (error) {
+    console.error(error);
+    return res.status(403);
   }
 });
