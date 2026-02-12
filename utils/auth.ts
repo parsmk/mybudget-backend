@@ -27,7 +27,7 @@ export const signAccessToken = (res: Response, payload: TokenPayload) => {
     httpOnly: true,
     secure: isSecure,
     sameSite: isSameSite,
-    maxAge: computeMS([15, "mins"]),
+    maxAge: computeMS([15, "secs"]),
   });
 
   return accessToken;
@@ -44,11 +44,15 @@ export const signRefreshToken = (res: Response, payload: TokenPayload) => {
     httpOnly: true,
     secure: isSecure,
     sameSite: isSameSite,
-    path: "/refresh",
     maxAge: computeMS([1, "days"]),
   });
 
   return refreshToken;
+};
+
+export const clearTokens = (res: Response) => {
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
 };
 
 export const verifyToken = (type: "refresh" | "access", token: string) => {

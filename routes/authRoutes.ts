@@ -3,7 +3,12 @@ import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 
 import { userSchema } from "../models/user";
-import { signAccessToken, signTokens, verifyToken } from "../utils/auth";
+import {
+  clearTokens,
+  signAccessToken,
+  signTokens,
+  verifyToken,
+} from "../utils/auth";
 import { db } from "../db";
 
 export const authRouter = Router();
@@ -54,6 +59,11 @@ authRouter.post("/signup", async (req, res) => {
   }
 });
 
+authRouter.post("/logout", async (req, res) => {
+  clearTokens(res);
+  return res.sendStatus(204);
+});
+
 authRouter.post("/refresh", async (req, res) => {
   const token = req.cookies["refreshToken"];
   if (!token) return res.sendStatus(401);
@@ -69,6 +79,6 @@ authRouter.post("/refresh", async (req, res) => {
     return res.status(200).json({ accessToken });
   } catch (error) {
     console.error(error);
-    return res.status(403);
+    return res.sendStatus(403);
   }
 });
