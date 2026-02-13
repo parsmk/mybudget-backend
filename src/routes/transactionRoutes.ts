@@ -8,9 +8,9 @@ export const transactionRouter = Router();
 transactionRouter.post("/create", ensureAuth, async (req, res) => {
   try {
     const payload = req.body;
-    const user = req.cookies["accessToken"];
+    const user = req.auth;
 
-    const transactions = payload.map((t: any) => ({ ...t, userID: user.id }));
+    const transactions = payload.map((t: any) => ({ ...t, userID: user?.id }));
 
     const uploaded = await db
       .insert(transactionSchema)
