@@ -1,5 +1,5 @@
 import { numeric, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { uuidPK } from "../utils/uuidPK";
+import { uuidPK } from "../utils/models";
 import { userSchema } from "./user";
 
 export const transactionSchema = sqliteTable("transaction", {
