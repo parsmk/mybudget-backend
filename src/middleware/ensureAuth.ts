@@ -5,7 +5,7 @@ export const ensureAuth = (req: Request, res: Response, next: NextFunction) => {
   try {
     const accessToken = req.cookies?.accessToken;
     if (!accessToken) return res.sendStatus(401);
-    verifyToken("access", accessToken);
+    req.auth = verifyToken("access", accessToken);
     return next();
   } catch (err) {
     return res.sendStatus(401);

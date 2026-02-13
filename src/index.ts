@@ -22,7 +22,7 @@ app.use(logEndpoint);
 
 // Routes
 app.use("/", authRouter);
-app.use("/transaction/", transactionRouter);
+app.use("/transaction", transactionRouter);
 
 // Start Server
 app.listen(PORT, () => {
