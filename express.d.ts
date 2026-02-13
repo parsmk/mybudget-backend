@@ -1,7 +1,11 @@
-import { TokenPayload } from "./utils/auth";
+import { TokenPayload } from "./src/utils/auth";
 
-declare namespace Express {
-  export interface Request {
-    auth?: TokenPayload;
+declare global {
+  namespace Express {
+    interface Request {
+      auth?: TokenPayload;
+    }
   }
 }
+
+export {};
