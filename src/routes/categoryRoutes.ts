@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { ensureAuth } from "../middleware/ensureAuth";
 import { db } from "../db";
-import { categorySchema } from "../models/transaction";
+import { categorySchema } from "../models/category";
 import { and, eq } from "drizzle-orm";
 
 export const categoryRouter = Router();
