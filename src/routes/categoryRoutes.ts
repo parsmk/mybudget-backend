@@ -2,7 +2,7 @@ import { Router } from "express";
 import { ensureAuth } from "../middleware/ensureAuth";
 import { db } from "../db";
 import { categorySchema } from "../models/transaction";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export const categoryRouter = Router();
 
@@ -44,8 +44,40 @@ categoryRouter.patch<{ id: string }>("/:id", ensureAuth, async (req, res) => {
     const category = await db
       .update(categorySchema)
       .set({ name: name })
-      .where(eq(categorySchema.id, id))
+      .where(
+        and(
+          eq(categorySchema.id, id),
+          eq(categorySchema.userID, req.auth?.id!),
+        ),
+      )
       .returning();
+
+    if (category.length < 1)
+      return res.status(400).json({ error: "Could not find category" });
+
+    return res.status(200).json(category);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Internal error" });
+  }
+});
+
+categoryRouter.delete<{ id: string }>("/:id", ensureAuth, async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const category = await db
+      .delete(categorySchema)
+      .where(
+        and(
+          eq(categorySchema.id, id),
+          eq(categorySchema.userID, req.auth?.id!),
+        ),
+      )
+      .returning();
+
+    if (category.length < 1)
+      return res.status(400).json({ error: "Could not find category" });
 
     return res.status(200).json(category);
   } catch (error) {
