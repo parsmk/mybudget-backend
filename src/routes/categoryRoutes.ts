@@ -35,3 +35,21 @@ categoryRouter.get("/", ensureAuth, async (req, res) => {
     return res.status(500).json({ error: "Internal error" });
   }
 });
+
+categoryRouter.patch<{ id: string }>("/:id", ensureAuth, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { name } = req.body;
+
+    const category = await db
+      .update(categorySchema)
+      .set({ name: name })
+      .where(eq(categorySchema.id, id))
+      .returning();
+
+    return res.status(200).json(category);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Internal error" });
+  }
+});
