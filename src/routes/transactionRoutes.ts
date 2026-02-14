@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 
 export const transactionRouter = Router();
 
-transactionRouter.post("/create", ensureAuth, async (req, res) => {
+transactionRouter.post("/", ensureAuth, async (req, res) => {
   try {
     const payload = req.body;
     const transactions = payload.map((t: any) => ({
