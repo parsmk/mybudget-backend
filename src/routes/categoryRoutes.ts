@@ -10,12 +10,12 @@ categoryRouter.post("/", ensureAuth, async (req, res) => {
   try {
     const { name } = req.body;
 
-    const newCategory = await db
+    const newCategories = await db
       .insert(categorySchema)
       .values({ name: name, userID: req.auth?.id! })
       .returning();
 
-    return res.status(204).json(newCategory);
+    return res.status(204).json(newCategories);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });
@@ -55,7 +55,7 @@ categoryRouter.patch<{ id: string }>("/:id", ensureAuth, async (req, res) => {
     if (category.length < 1)
       return res.status(400).json({ error: "Could not find category" });
 
-    return res.status(200).json(category);
+    return res.status(200).json(category[0]);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });
@@ -79,7 +79,7 @@ categoryRouter.delete<{ id: string }>("/:id", ensureAuth, async (req, res) => {
     if (category.length < 1)
       return res.status(400).json({ error: "Could not find category" });
 
-    return res.status(200).json(category);
+    return res.status(200).json(category[0]);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });
