@@ -53,7 +53,7 @@ export const signAccessToken = (res: Response, payload: TokenPayload) => {
     httpOnly: true,
     secure: isSecure,
     sameSite: isSameSite,
-    maxAge: computeMS([15, "secs"]),
+    maxAge: computeMS([15, "mins"]),
   });
 
   return accessToken;
