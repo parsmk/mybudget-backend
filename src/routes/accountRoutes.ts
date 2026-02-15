@@ -8,14 +8,26 @@ export const accountRouter = Router();
 
 accountRouter.post("/", ensureAuth, async (req, res) => {
   try {
-    const payload = req.body;
+    const { number, name, institution, balance, type } = req.body;
+
+    if (!(number && institution && balance && type))
+      return res.status(400).json({
+        error: `Missing required properties: {number, institution, balance, and type}`,
+      });
 
     const account = await db
       .insert(accountSchema)
-      .values({ ...payload, userID: req.auth?.id! })
+      .values({
+        number,
+        name,
+        institution,
+        balance,
+        type,
+        userID: req.auth?.id!,
+      })
       .returning();
 
-    return res.status(200).json(account[0]);
+    return res.status(201).json(account[0]);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal error" });
@@ -60,11 +72,17 @@ accountRouter.get<{ id: string }>("/:id", ensureAuth, async (req, res) => {
 accountRouter.patch<{ id: string }>("/:id", ensureAuth, async (req, res) => {
   try {
     const id = req.params.id;
-    const payload = req.body;
+    const { number, name, institution, balance, type } = req.body;
 
     const account = await db
       .update(accountSchema)
-      .set(payload)
+      .set({
+        number,
+        name,
+        institution,
+        balance,
+        type,
+      })
       .where(
         and(eq(accountSchema.userID, req.auth?.id!), eq(accountSchema.id, id)),
       )
