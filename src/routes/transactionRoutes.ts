@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { ensureAuth } from "../middleware/ensureAuth";
 import { db } from "../db";
-import { transactionSchema } from "../models/transaction";
+import { transactionSchema, TransactionInsert } from "../models/transaction";
 import { and, eq } from "drizzle-orm";
 import { categorySchema } from "../models/category";
 
@@ -9,18 +9,40 @@ export const transactionRouter = Router();
 
 transactionRouter.post("/", ensureAuth, async (req, res) => {
   try {
-    const payload = req.body;
-    const transactions = payload.map((t: any) => ({
-      ...t,
-      userID: req.auth?.id!,
-    }));
+    const payload = Array.isArray(req.body) ? req.body : [req.body];
+    const errs: string[] = [];
+    const transactions: TransactionInsert[] = [];
+
+    for (const dp of payload) {
+      if (!(dp.inflow || dp.outflow)) {
+        errs.push("Transactions must have either inflow or outflow");
+        continue;
+      }
+      if (!(dp.date && dp.payee && dp.accountID)) {
+        errs.push("Missing required properties: {date, payee, account}");
+        continue;
+      }
+
+      transactions.push({
+        date: dp.date,
+        inflow: dp.inflow,
+        outflow: dp.outflow,
+        payee: dp.payee,
+        accountID: dp.accountID,
+        categoryID: dp.categoryID,
+        userID: req.auth?.id!,
+      });
+    }
 
     const uploaded = await db
       .insert(transactionSchema)
       .values(transactions)
       .returning();
 
-    return res.status(201).json(uploaded);
+    return res.status(201).json({
+      errors: { count: errs.length, reasons: errs },
+      success: { count: uploaded.length, uploaded },
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });
@@ -86,9 +108,6 @@ transactionRouter.delete<{ id: string }>(
   async (req, res) => {
     try {
       const id = req.params.id;
-
-      console.log(id);
-      console.log(req.auth?.id);
 
       const transaction = await db
         .delete(transactionSchema)

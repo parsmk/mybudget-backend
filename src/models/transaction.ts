@@ -3,6 +3,7 @@ import { uuidPK } from "../utils/models";
 import { userSchema } from "./user";
 import { categorySchema } from "./category";
 import { accountSchema } from "./account";
+import { InferInsertModel } from "drizzle-orm";
 
 export const transactionSchema = sqliteTable("transaction", {
   id: uuidPK(),
@@ -18,3 +19,5 @@ export const transactionSchema = sqliteTable("transaction", {
     .notNull()
     .references(() => userSchema.id),
 });
+
+export type TransactionInsert = InferInsertModel<typeof transactionSchema>;
