@@ -80,26 +80,33 @@ transactionRouter.patch<{ transactionId: string }>(
   },
 );
 
-transactionRouter.delete<{ id: string }>("/:id", async (req, res) => {
-  try {
-    const id = req.params.id;
+transactionRouter.delete<{ id: string }>(
+  "/:id",
+  ensureAuth,
+  async (req, res) => {
+    try {
+      const id = req.params.id;
 
-    const transaction = await db
-      .delete(transactionSchema)
-      .where(
-        and(
-          eq(transactionSchema.id, id),
-          eq(transactionSchema.userID, req.auth?.id!),
-        ),
-      )
-      .returning();
+      console.log(id);
+      console.log(req.auth?.id);
 
-    if (transaction.length < 1)
-      return res.status(404).json({ error: "Could not find transaction" });
+      const transaction = await db
+        .delete(transactionSchema)
+        .where(
+          and(
+            eq(transactionSchema.id, id),
+            eq(transactionSchema.userID, req.auth?.id!),
+          ),
+        )
+        .returning();
 
-    return res.status(200).json(transaction[0]);
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Internal error" });
-  }
-});
+      if (transaction.length < 1)
+        return res.status(404).json({ error: "Could not find transaction" });
+
+      return res.status(200).json(transaction[0]);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Internal error" });
+    }
+  },
+);
