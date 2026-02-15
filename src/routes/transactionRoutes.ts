@@ -3,6 +3,7 @@ import { ensureAuth } from "../middleware/ensureAuth";
 import { db } from "../db";
 import { transactionSchema } from "../models/transaction";
 import { and, eq } from "drizzle-orm";
+import { categorySchema } from "../models/category";
 
 export const transactionRouter = Router();
 
@@ -28,10 +29,19 @@ transactionRouter.post("/", ensureAuth, async (req, res) => {
 
 transactionRouter.get("/", ensureAuth, async (req, res) => {
   try {
-    const transactions = await db
-      .select()
+    const rows = await db
+      .select({ transaction: transactionSchema, category: categorySchema })
       .from(transactionSchema)
+      .leftJoin(
+        categorySchema,
+        eq(transactionSchema.categoryID, categorySchema.id),
+      )
       .where(eq(transactionSchema.userID, req.auth?.id!));
+
+    const transactions = rows.map(({ transaction, category }) => ({
+      ...transaction,
+      category,
+    }));
 
     return res.status(200).json(transactions);
   } catch (error) {
