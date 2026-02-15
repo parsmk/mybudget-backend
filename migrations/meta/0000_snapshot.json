@@ -1,9 +1,95 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "123d8ec6-df59-49f6-b5f1-119379f10078",
-  "prevId": "486b8b03-765c-4e71-8f84-4c5fb24f79aa",
+  "id": "4ea44cc9-98ec-4f5d-a61e-f999311a3b60",
+  "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
+    "account": {
+      "name": "account",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "number": {
+          "name": "number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "institution": {
+          "name": "institution",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "balance": {
+          "name": "balance",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "userID": {
+          "name": "userID",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "account_number_unique": {
+          "name": "account_number_unique",
+          "columns": [
+            "number"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "account_userID_user_id_fk": {
+          "name": "account_userID_user_id_fk",
+          "tableFrom": "account",
+          "tableTo": "user",
+          "columnsFrom": [
+            "userID"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "account_type_check": {
+          "name": "account_type_check",
+          "value": "\"account\".\"type\" in ('chequing', 'credit', 'cash')"
+        }
+      }
+    },
     "category": {
       "name": "category",
       "columns": {
@@ -87,6 +173,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "accountID": {
+          "name": "accountID",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "categoryID": {
           "name": "categoryID",
           "type": "text",
@@ -104,6 +197,19 @@
       },
       "indexes": {},
       "foreignKeys": {
+        "transaction_accountID_account_id_fk": {
+          "name": "transaction_accountID_account_id_fk",
+          "tableFrom": "transaction",
+          "tableTo": "account",
+          "columnsFrom": [
+            "accountID"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "transaction_categoryID_category_id_fk": {
           "name": "transaction_categoryID_category_id_fk",
           "tableFrom": "transaction",

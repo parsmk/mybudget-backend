@@ -19,7 +19,7 @@ const CORS = {
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors(CORS));
-app.use(logEndpoint);
+if (process.env.NODE_ENV === "development") app.use(logEndpoint);
 
 // Routes
 app.use("/", authRouter);
