@@ -1,21 +1,24 @@
 import { Router } from "express";
 import { ensureAuth } from "../middleware/ensureAuth";
-import { db } from "../db";
-import { categorySchema } from "../models/category";
-import { and, eq } from "drizzle-orm";
+import {
+  createCategories,
+  deleteCategory,
+  getCategories,
+  patchCategory,
+} from "../models/category";
 
 export const categoryRouter = Router();
 
 categoryRouter.post("/", ensureAuth, async (req, res) => {
   try {
-    const { name } = req.body;
+    const payload = Array.isArray(req.body) ? req.body : [req.body];
+    const newCategories = payload.map((dp) => ({
+      ...dp,
+      userID: req.auth?.id!,
+    }));
+    const categories = await createCategories(newCategories);
 
-    const newCategories = await db
-      .insert(categorySchema)
-      .values({ name: name, userID: req.auth?.id! })
-      .returning();
-
-    return res.status(201).json(newCategories);
+    return res.status(201).json(categories);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });
@@ -24,11 +27,7 @@ categoryRouter.post("/", ensureAuth, async (req, res) => {
 
 categoryRouter.get("/", ensureAuth, async (req, res) => {
   try {
-    const categories = await db
-      .select()
-      .from(categorySchema)
-      .where(eq(categorySchema.userID, req.auth?.id!));
-
+    const categories = getCategories(req.auth?.id!);
     return res.status(200).json(categories);
   } catch (error) {
     console.error(error);
@@ -38,24 +37,13 @@ categoryRouter.get("/", ensureAuth, async (req, res) => {
 
 categoryRouter.patch<{ id: string }>("/:id", ensureAuth, async (req, res) => {
   try {
-    const id = req.params.id;
-    const { name } = req.body;
+    const category = patchCategory(req.params.id, req.auth?.id!, {
+      name: req.body.name,
+    });
 
-    const category = await db
-      .update(categorySchema)
-      .set({ name: name })
-      .where(
-        and(
-          eq(categorySchema.id, id),
-          eq(categorySchema.userID, req.auth?.id!),
-        ),
-      )
-      .returning();
-
-    if (category.length < 1)
+    if (!category)
       return res.status(404).json({ error: "Could not find category" });
-
-    return res.status(200).json(category[0]);
+    else return res.status(200).json(category);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });
@@ -64,22 +52,11 @@ categoryRouter.patch<{ id: string }>("/:id", ensureAuth, async (req, res) => {
 
 categoryRouter.delete<{ id: string }>("/:id", ensureAuth, async (req, res) => {
   try {
-    const id = req.params.id;
+    const category = deleteCategory(req.params.id, req.auth?.id!);
 
-    const category = await db
-      .delete(categorySchema)
-      .where(
-        and(
-          eq(categorySchema.id, id),
-          eq(categorySchema.userID, req.auth?.id!),
-        ),
-      )
-      .returning();
-
-    if (category.length < 1)
+    if (!category)
       return res.status(404).json({ error: "Could not find category" });
-
-    return res.status(200).json(category[0]);
+    else return res.status(200).json(category);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });

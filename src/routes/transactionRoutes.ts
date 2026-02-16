@@ -1,9 +1,12 @@
 import { Router } from "express";
 import { ensureAuth } from "../middleware/ensureAuth";
-import { db } from "../db";
-import { transactionSchema, TransactionInsert } from "../models/transaction";
-import { and, eq } from "drizzle-orm";
-import { categorySchema } from "../models/category";
+import {
+  TransactionInsert,
+  createTransactions,
+  getTransactions,
+  patchTransaction,
+  deleteTransaction,
+} from "../models/transaction";
 
 export const transactionRouter = Router();
 
@@ -34,13 +37,24 @@ transactionRouter.post("/", ensureAuth, async (req, res) => {
       });
     }
 
-    const uploaded = await db
-      .insert(transactionSchema)
-      .values(transactions)
-      .returning();
+    const uploaded = await createTransactions(transactions);
+
+    if (uploaded.length === 0 && errs.length > 0) {
+      return res.status(400).json({
+        errors: { count: errs.length, reasons: errs },
+        success: { count: 0, uploaded: [] },
+      });
+    }
+
+    if (uploaded.length > 0 && errs.length > 0) {
+      return res.status(200).json({
+        errors: { count: errs.length, reasons: errs },
+        success: { count: uploaded.length, uploaded },
+      });
+    }
 
     return res.status(201).json({
-      errors: { count: errs.length, reasons: errs },
+      errors: { count: 0, reasons: [] },
       success: { count: uploaded.length, uploaded },
     });
   } catch (error) {
@@ -51,20 +65,7 @@ transactionRouter.post("/", ensureAuth, async (req, res) => {
 
 transactionRouter.get("/", ensureAuth, async (req, res) => {
   try {
-    const rows = await db
-      .select({ transaction: transactionSchema, category: categorySchema })
-      .from(transactionSchema)
-      .leftJoin(
-        categorySchema,
-        eq(transactionSchema.categoryID, categorySchema.id),
-      )
-      .where(eq(transactionSchema.userID, req.auth?.id!));
-
-    const transactions = rows.map(({ transaction, category }) => ({
-      ...transaction,
-      category,
-    }));
-
+    const transactions = await getTransactions(req.auth?.id!);
     return res.status(200).json(transactions);
   } catch (error) {
     console.error(error);
@@ -72,29 +73,24 @@ transactionRouter.get("/", ensureAuth, async (req, res) => {
   }
 });
 
-transactionRouter.patch<{ transactionId: string }>(
-  "/:transactionId",
+transactionRouter.patch<{ id: string }>(
+  "/:id",
   ensureAuth,
   async (req, res) => {
     try {
-      const transactionId = req.params.transactionId;
-      const { id, userID, ...rest } = req.body;
+      const { date, payee, accountID, inflow, outflow, categoryID } = req.body;
+      const transaction = await patchTransaction(req.params.id, req.auth?.id!, {
+        date,
+        payee,
+        accountID,
+        inflow,
+        outflow,
+        categoryID,
+      });
 
-      const transaction = await db
-        .update(transactionSchema)
-        .set(rest)
-        .where(
-          and(
-            eq(transactionSchema.id, transactionId),
-            eq(transactionSchema.userID, req.auth?.id!),
-          ),
-        )
-        .returning();
-
-      if (transaction.length < 1)
+      if (!transaction)
         return res.status(404).json({ error: "Could not find transaction" });
-
-      return res.status(200).json(transaction[0]);
+      else return res.status(200).json(transaction);
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Internal error" });
@@ -107,22 +103,11 @@ transactionRouter.delete<{ id: string }>(
   ensureAuth,
   async (req, res) => {
     try {
-      const id = req.params.id;
+      const transaction = await deleteTransaction(req.params.id, req.auth?.id!);
 
-      const transaction = await db
-        .delete(transactionSchema)
-        .where(
-          and(
-            eq(transactionSchema.id, id),
-            eq(transactionSchema.userID, req.auth?.id!),
-          ),
-        )
-        .returning();
-
-      if (transaction.length < 1)
+      if (!transaction)
         return res.status(404).json({ error: "Could not find transaction" });
-
-      return res.status(200).json(transaction[0]);
+      else return res.status(200).json(transaction);
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Internal error" });
