@@ -17,7 +17,7 @@ authRouter.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!(email && password))
-      return res.status(400).json({ error: "Need username and password!" });
+      return res.status(400).json({ error: "Need email and password!" });
 
     const user = (
       await db.select().from(userSchema).where(eq(userSchema.email, email))

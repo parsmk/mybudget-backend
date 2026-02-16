@@ -12,8 +12,11 @@ export const categoryRouter = Router();
 categoryRouter.post("/", ensureAuth, async (req, res) => {
   try {
     const payload = Array.isArray(req.body) ? req.body : [req.body];
+    if (payload.length < 1)
+      return res.status(400).json({ error: "No categories supplied" });
+
     const newCategories = payload.map((dp) => ({
-      ...dp,
+      name: dp.name,
       userID: req.auth?.id!,
     }));
     const categories = await createCategories(newCategories);
@@ -27,7 +30,7 @@ categoryRouter.post("/", ensureAuth, async (req, res) => {
 
 categoryRouter.get("/", ensureAuth, async (req, res) => {
   try {
-    const categories = getCategories(req.auth?.id!);
+    const categories = await getCategories(req.auth?.id!);
     return res.status(200).json(categories);
   } catch (error) {
     console.error(error);
@@ -37,7 +40,7 @@ categoryRouter.get("/", ensureAuth, async (req, res) => {
 
 categoryRouter.patch<{ id: string }>("/:id", ensureAuth, async (req, res) => {
   try {
-    const category = patchCategory(req.params.id, req.auth?.id!, {
+    const category = await patchCategory(req.params.id, req.auth?.id!, {
       name: req.body.name,
     });
 
@@ -52,7 +55,7 @@ categoryRouter.patch<{ id: string }>("/:id", ensureAuth, async (req, res) => {
 
 categoryRouter.delete<{ id: string }>("/:id", ensureAuth, async (req, res) => {
   try {
-    const category = deleteCategory(req.params.id, req.auth?.id!);
+    const category = await deleteCategory(req.params.id, req.auth?.id!);
 
     if (!category)
       return res.status(404).json({ error: "Could not find category" });

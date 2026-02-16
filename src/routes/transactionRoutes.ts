@@ -13,11 +13,15 @@ export const transactionRouter = Router();
 transactionRouter.post("/", ensureAuth, async (req, res) => {
   try {
     const payload = Array.isArray(req.body) ? req.body : [req.body];
+
+    if (payload.length < 1)
+      return res.status(400).json({ error: "No transactions supplied" });
+
     const errs: string[] = [];
     const transactions: TransactionInsert[] = [];
 
     for (const dp of payload) {
-      if (!(dp.inflow || dp.outflow)) {
+      if (Number(dp.inflow ?? 0) <= 0 && Number(dp.outflow ?? 0) <= 0) {
         errs.push("Transactions must have either inflow or outflow");
         continue;
       }
@@ -27,7 +31,7 @@ transactionRouter.post("/", ensureAuth, async (req, res) => {
       }
 
       transactions.push({
-        date: dp.date,
+        date: new Date(dp.date).toDateString(),
         inflow: dp.inflow,
         outflow: dp.outflow,
         payee: dp.payee,
