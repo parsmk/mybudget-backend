@@ -6,7 +6,7 @@ import {
   getAccounts,
   patchAccount,
 } from "../models/account";
-import { transactionRouter } from "./transactionRoutes";
+import { getTransactions } from "../models/transaction";
 
 export const accountRouter = Router();
 
@@ -49,6 +49,16 @@ accountRouter.get<{ id: string }>("/:id", async (req, res) => {
 
     if (!account) return res.status(404).json({ error: "Account not found" });
     else return res.status(200).json(account);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal error" });
+  }
+});
+
+accountRouter.get<{ id: string }>("/:id/transactions", async (req, res) => {
+  try {
+    const transactions = await getTransactions(req.auth?.id!, req.params.id);
+    res.status(200).json(transactions);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal error" });

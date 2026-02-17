@@ -28,7 +28,12 @@ export const createTransactions = async (transactions: TransactionInsert[]) => {
   return await db.insert(transactionSchema).values(transactions).returning();
 };
 
-export const getTransactions = async (userID: string) => {
+export const getTransactions = async (userID: string, accountID?: string) => {
+  const confirmUser = eq(transactionSchema.userID, userID);
+  const whereQuery = accountID
+    ? and(confirmUser, eq(transactionSchema.accountID, accountID))
+    : confirmUser;
+
   const rows = await db
     .select({ transaction: transactionSchema, category: categorySchema })
     .from(transactionSchema)
@@ -36,7 +41,7 @@ export const getTransactions = async (userID: string) => {
       categorySchema,
       eq(transactionSchema.categoryID, categorySchema.id),
     )
-    .where(eq(transactionSchema.userID, userID));
+    .where(whereQuery);
 
   return rows.map(({ transaction, category }) => ({
     ...transaction,
