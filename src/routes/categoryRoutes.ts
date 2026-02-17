@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { ensureAuth } from "../middleware/ensureAuth";
 import {
   createCategories,
   deleteCategory,
@@ -9,7 +8,7 @@ import {
 
 export const categoryRouter = Router();
 
-categoryRouter.post("/", ensureAuth, async (req, res) => {
+categoryRouter.post("/", async (req, res) => {
   try {
     const payload = Array.isArray(req.body) ? req.body : [req.body];
     if (payload.length < 1)
@@ -28,7 +27,7 @@ categoryRouter.post("/", ensureAuth, async (req, res) => {
   }
 });
 
-categoryRouter.get("/", ensureAuth, async (req, res) => {
+categoryRouter.get("/", async (req, res) => {
   try {
     const categories = await getCategories(req.auth?.id!);
     return res.status(200).json(categories);
@@ -38,7 +37,7 @@ categoryRouter.get("/", ensureAuth, async (req, res) => {
   }
 });
 
-categoryRouter.patch<{ id: string }>("/:id", ensureAuth, async (req, res) => {
+categoryRouter.patch<{ id: string }>("/:id", async (req, res) => {
   try {
     const category = await patchCategory(req.params.id, req.auth?.id!, {
       name: req.body.name,
@@ -53,7 +52,7 @@ categoryRouter.patch<{ id: string }>("/:id", ensureAuth, async (req, res) => {
   }
 });
 
-categoryRouter.delete<{ id: string }>("/:id", ensureAuth, async (req, res) => {
+categoryRouter.delete<{ id: string }>("/:id", async (req, res) => {
   try {
     const category = await deleteCategory(req.params.id, req.auth?.id!);
 

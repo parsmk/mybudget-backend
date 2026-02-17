@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { ensureAuth } from "../middleware/ensureAuth";
 import {
   TransactionInsert,
   createTransactions,
@@ -10,7 +9,7 @@ import {
 
 export const transactionRouter = Router();
 
-transactionRouter.post("/", ensureAuth, async (req, res) => {
+transactionRouter.post("/", async (req, res) => {
   try {
     const payload = Array.isArray(req.body) ? req.body : [req.body];
 
@@ -67,7 +66,7 @@ transactionRouter.post("/", ensureAuth, async (req, res) => {
   }
 });
 
-transactionRouter.get("/", ensureAuth, async (req, res) => {
+transactionRouter.get("/", async (req, res) => {
   try {
     const transactions = await getTransactions(req.auth?.id!);
     return res.status(200).json(transactions);
@@ -77,44 +76,36 @@ transactionRouter.get("/", ensureAuth, async (req, res) => {
   }
 });
 
-transactionRouter.patch<{ id: string }>(
-  "/:id",
-  ensureAuth,
-  async (req, res) => {
-    try {
-      const { date, payee, accountID, inflow, outflow, categoryID } = req.body;
-      const transaction = await patchTransaction(req.params.id, req.auth?.id!, {
-        date,
-        payee,
-        accountID,
-        inflow,
-        outflow,
-        categoryID,
-      });
+transactionRouter.patch<{ id: string }>("/:id", async (req, res) => {
+  try {
+    const { date, payee, accountID, inflow, outflow, categoryID } = req.body;
+    const transaction = await patchTransaction(req.params.id, req.auth?.id!, {
+      date,
+      payee,
+      accountID,
+      inflow,
+      outflow,
+      categoryID,
+    });
 
-      if (!transaction)
-        return res.status(404).json({ error: "Could not find transaction" });
-      else return res.status(200).json(transaction);
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Internal error" });
-    }
-  },
-);
+    if (!transaction)
+      return res.status(404).json({ error: "Could not find transaction" });
+    else return res.status(200).json(transaction);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Internal error" });
+  }
+});
 
-transactionRouter.delete<{ id: string }>(
-  "/:id",
-  ensureAuth,
-  async (req, res) => {
-    try {
-      const transaction = await deleteTransaction(req.params.id, req.auth?.id!);
+transactionRouter.delete<{ id: string }>("/:id", async (req, res) => {
+  try {
+    const transaction = await deleteTransaction(req.params.id, req.auth?.id!);
 
-      if (!transaction)
-        return res.status(404).json({ error: "Could not find transaction" });
-      else return res.status(200).json(transaction);
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Internal error" });
-    }
-  },
-);
+    if (!transaction)
+      return res.status(404).json({ error: "Could not find transaction" });
+    else return res.status(200).json(transaction);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Internal error" });
+  }
+});

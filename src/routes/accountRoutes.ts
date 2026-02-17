@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { ensureAuth } from "../middleware/ensureAuth";
 import {
   createAccount,
   deleteAccount,
@@ -7,10 +6,11 @@ import {
   getAccounts,
   patchAccount,
 } from "../models/account";
+import { transactionRouter } from "./transactionRoutes";
 
 export const accountRouter = Router();
 
-accountRouter.post("/", ensureAuth, async (req, res) => {
+accountRouter.post("/", async (req, res) => {
   try {
     const { name, balance, type } = req.body;
 
@@ -33,7 +33,7 @@ accountRouter.post("/", ensureAuth, async (req, res) => {
   }
 });
 
-accountRouter.get("/", ensureAuth, async (req, res) => {
+accountRouter.get("/", async (req, res) => {
   try {
     const accounts = await getAccounts(req.auth?.id!);
     return res.status(200).json(accounts);
@@ -43,7 +43,7 @@ accountRouter.get("/", ensureAuth, async (req, res) => {
   }
 });
 
-accountRouter.get<{ id: string }>("/:id", ensureAuth, async (req, res) => {
+accountRouter.get<{ id: string }>("/:id", async (req, res) => {
   try {
     const account = await getAccount(req.params.id, req.auth?.id!);
 
@@ -55,7 +55,7 @@ accountRouter.get<{ id: string }>("/:id", ensureAuth, async (req, res) => {
   }
 });
 
-accountRouter.patch<{ id: string }>("/:id", ensureAuth, async (req, res) => {
+accountRouter.patch<{ id: string }>("/:id", async (req, res) => {
   try {
     const { name, balance, type } = req.body;
 
@@ -73,7 +73,7 @@ accountRouter.patch<{ id: string }>("/:id", ensureAuth, async (req, res) => {
   }
 });
 
-accountRouter.delete<{ id: string }>("/:id", ensureAuth, async (req, res) => {
+accountRouter.delete<{ id: string }>("/:id", async (req, res) => {
   try {
     const account = await deleteAccount(req.params.id, req.auth?.id!);
 

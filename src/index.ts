@@ -7,6 +7,7 @@ import { transactionRouter } from "./routes/transactionRoutes";
 import { logEndpoint } from "./middleware/logEndpoint";
 import { categoryRouter } from "./routes/categoryRoutes";
 import { accountRouter } from "./routes/accountRoutes";
+import { ensureAuth } from "./middleware/ensureAuth";
 
 // Config
 const PORT = 5000;
@@ -24,9 +25,9 @@ if (process.env.NODE_ENV === "development") app.use(logEndpoint);
 
 // Routes
 app.use("/", authRouter);
-app.use("/transaction", transactionRouter);
-app.use("/category", categoryRouter);
-app.use("/account", accountRouter);
+app.use("/transaction", ensureAuth, transactionRouter);
+app.use("/category", ensureAuth, categoryRouter);
+app.use("/account", ensureAuth, accountRouter);
 
 // Start Server
 app.listen(PORT, () => {
