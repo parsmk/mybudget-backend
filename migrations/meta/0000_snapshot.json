@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "4ea44cc9-98ec-4f5d-a61e-f999311a3b60",
+  "id": "d79220f3-b4eb-4a16-8f62-65e5f36566e5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "account": {
@@ -14,22 +14,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "number": {
-          "name": "number",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
         "name": {
           "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "institution": {
-          "name": "institution",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -57,15 +43,7 @@
           "autoincrement": false
         }
       },
-      "indexes": {
-        "account_number_unique": {
-          "name": "account_number_unique",
-          "columns": [
-            "number"
-          ],
-          "isUnique": true
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
         "account_userID_user_id_fk": {
           "name": "account_userID_user_id_fk",

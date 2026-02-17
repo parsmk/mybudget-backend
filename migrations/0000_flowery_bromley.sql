@@ -1,8 +1,6 @@
 CREATE TABLE `account` (
 	`id` text PRIMARY KEY NOT NULL,
-	`number` text NOT NULL,
-	`name` text,
-	`institution` text NOT NULL,
+	`name` text NOT NULL,
 	`balance` numeric NOT NULL,
 	`type` text NOT NULL,
 	`userID` text NOT NULL,
@@ -10,7 +8,6 @@ CREATE TABLE `account` (
 	CONSTRAINT "account_type_check" CHECK("account"."type" in ('chequing', 'credit', 'cash'))
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `account_number_unique` ON `account` (`number`);--> statement-breakpoint
 CREATE TABLE `category` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,

@@ -11,9 +11,7 @@ export const accountSchema = sqliteTable(
   "account",
   {
     id: uuidPK(),
-    number: text().notNull().unique(),
-    name: text(),
-    institution: text().notNull(),
+    name: text().notNull(),
     balance: numeric().notNull(),
     type: text().$type<AccountType>().notNull(),
     userID: text()
@@ -39,9 +37,7 @@ export const createAccount = async (account: AccountInsert) => {
     await db
       .insert(accountSchema)
       .values({
-        number: account.number,
         name: account.name,
-        institution: account.institution,
         balance: account.balance,
         type: account.type,
         userID: account.userID,
