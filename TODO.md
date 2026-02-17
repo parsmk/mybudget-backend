@@ -28,3 +28,7 @@
 ## AccountSchema
 
 - Cascade delete accounts transactions
+
+## Infrastructure
+
+- Error handling middleware
