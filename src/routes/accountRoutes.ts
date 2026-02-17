@@ -12,17 +12,17 @@ export const accountRouter = Router();
 
 accountRouter.post("/", ensureAuth, async (req, res) => {
   try {
-    const { number, name, institution, balance, type } = req.body;
+    const { name, balance, type } = req.body;
 
-    if (!(number && institution && Number(balance ?? 0) < 0 && type))
+    console.log(`name: ${name} | balance: ${balance} | type: ${type}`);
+
+    if (!(name && Number(balance ?? 0) > 0 && type))
       return res.status(400).json({
-        error: `Missing or invalid required properties: {number, institution, balance, and type}`,
+        error: `Missing or invalid required properties: {number, balance, and type}`,
       });
 
     const account = await createAccount({
-      number,
       name,
-      institution,
       balance,
       type,
       userID: req.auth?.id!,
@@ -59,12 +59,10 @@ accountRouter.get<{ id: string }>("/:id", ensureAuth, async (req, res) => {
 
 accountRouter.patch<{ id: string }>("/:id", ensureAuth, async (req, res) => {
   try {
-    const { number, name, institution, balance, type } = req.body;
+    const { name, balance, type } = req.body;
 
     const account = await patchAccount(req.params.id, req.auth?.id!, {
-      number,
       name,
-      institution,
       balance,
       type,
     });
