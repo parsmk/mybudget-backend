@@ -14,8 +14,6 @@ accountRouter.post("/", ensureAuth, async (req, res) => {
   try {
     const { name, balance, type } = req.body;
 
-    console.log(`name: ${name} | balance: ${balance} | type: ${type}`);
-
     if (!(name && Number(balance ?? 0) > 0 && type))
       return res.status(400).json({
         error: `Missing or invalid required properties: {number, balance, and type}`,
