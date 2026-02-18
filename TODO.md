@@ -14,6 +14,7 @@
 ### POST
 
 - Update linked accounts balance on post Transaction
+- Normalize input dates to YYYY-MM-DD | YY-MM-DD reject others
 
 ### PATCH
 
@@ -26,6 +27,8 @@
 - Cascade delete users categories/transactions/accounts
 
 ## AccountSchema
+
+### DELETE
 
 - Cascade delete accounts transactions
 
