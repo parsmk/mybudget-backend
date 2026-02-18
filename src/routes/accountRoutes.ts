@@ -39,7 +39,7 @@ accountRouter.get("/", async (req, res) => {
     return res.status(200).json(accounts);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ error: "Internal error" });
   }
 });
 
@@ -51,17 +51,17 @@ accountRouter.get<{ id: string }>("/:id", async (req, res) => {
     else return res.status(200).json(account);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ error: "Internal error" });
   }
 });
 
 accountRouter.get<{ id: string }>("/:id/transactions", async (req, res) => {
   try {
     const transactions = await getTransactions(req.auth?.id!, req.params.id);
-    res.status(200).json(transactions);
+    return res.status(200).json(transactions);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ error: "Internal error" });
   }
 });
 
@@ -79,7 +79,7 @@ accountRouter.patch<{ id: string }>("/:id", async (req, res) => {
     else return res.status(200).json(account);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ error: "Internal error" });
   }
 });
 
@@ -91,6 +91,6 @@ accountRouter.delete<{ id: string }>("/:id", async (req, res) => {
     return res.status(200).json(account);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ error: "Internal error" });
   }
 });
