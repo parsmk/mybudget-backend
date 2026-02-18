@@ -6,7 +6,10 @@ import {
   getAccounts,
   patchAccount,
 } from "../models/account";
-import { getTransactions } from "../models/transaction";
+import {
+  aggregateTransactionsByCategory,
+  getTransactions,
+} from "../models/transaction";
 
 export const accountRouter = Router();
 
@@ -59,6 +62,40 @@ accountRouter.get<{ id: string }>("/:id/transactions", async (req, res) => {
   try {
     const transactions = await getTransactions(req.auth?.id!, req.params.id);
     return res.status(200).json(transactions);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Internal error" });
+  }
+});
+
+accountRouter.get<{ id: string }>("/:id/analytics", async (req, res) => {
+  try {
+    const from =
+      typeof req.query.from === "string" ? req.query.from : undefined;
+    const to = typeof req.query.to === "string" ? req.query.to : undefined;
+
+    const sumByCategory = await aggregateTransactionsByCategory(
+      req.auth?.id!,
+      req.params.id,
+      from,
+      to,
+    );
+
+    const total = sumByCategory.reduce(
+      (acc, c) => acc + Number(c.amount ?? 0),
+      0,
+    );
+
+    const output = sumByCategory.map((cat) => {
+      const amount = Number(cat.amount ?? 0);
+      return {
+        categoryID: cat.categoryID,
+        amount,
+        pct: +(total > 0 ? amount / total : 0).toFixed(2),
+      };
+    });
+
+    return res.status(200).json(output);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });

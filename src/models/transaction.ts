@@ -1,6 +1,14 @@
 import { numeric, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { InferInsertModel, InferSelectModel, and, eq } from "drizzle-orm";
-import { uuidPK } from "../utils/models";
+import {
+  InferInsertModel,
+  InferSelectModel,
+  and,
+  eq,
+  gte,
+  lt,
+  sql,
+} from "drizzle-orm";
+import { queryBuilder, uuidPK } from "../utils/models";
 import { userSchema } from "./user";
 import { categorySchema } from "./category";
 import { accountSchema } from "./account";
@@ -30,9 +38,9 @@ export const createTransactions = async (transactions: TransactionInsert[]) => {
 
 export const getTransactions = async (userID: string, accountID?: string) => {
   const confirmUser = eq(transactionSchema.userID, userID);
-  const whereQuery = accountID
-    ? and(confirmUser, eq(transactionSchema.accountID, accountID))
-    : confirmUser;
+  const filterAccount = accountID
+    ? eq(transactionSchema.accountID, accountID)
+    : null;
 
   const rows = await db
     .select({ transaction: transactionSchema, category: categorySchema })
@@ -41,12 +49,39 @@ export const getTransactions = async (userID: string, accountID?: string) => {
       categorySchema,
       eq(transactionSchema.categoryID, categorySchema.id),
     )
-    .where(whereQuery);
+    .where(queryBuilder("and", confirmUser, filterAccount));
 
   return rows.map(({ transaction, category }) => ({
     ...transaction,
     category,
   }));
+};
+
+export const aggregateTransactionsByCategory = async (
+  userID: string,
+  accountID?: string,
+  from?: string,
+  to?: string,
+) => {
+  const confirmUser = eq(transactionSchema.userID, userID);
+  const filterFrom = from ? gte(transactionSchema.date, from) : null;
+  const filterTo = to ? lt(transactionSchema.date, to) : null;
+  const filterAccount = accountID
+    ? eq(transactionSchema.accountID, accountID)
+    : null;
+
+  const rows = await db
+    .select({
+      categoryID: transactionSchema.categoryID,
+      amount: sql<number>`sum(${transactionSchema.outflow})`,
+    })
+    .from(transactionSchema)
+    .where(
+      queryBuilder("and", confirmUser, filterFrom, filterTo, filterAccount),
+    )
+    .groupBy(transactionSchema.categoryID);
+
+  return rows;
 };
 
 export const patchTransaction = async (
