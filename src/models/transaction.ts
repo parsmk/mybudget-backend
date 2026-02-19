@@ -5,6 +5,7 @@ import {
   and,
   eq,
   gte,
+  inArray,
   lt,
   sql,
 } from "drizzle-orm";
@@ -118,4 +119,19 @@ export const deleteTransaction = async (
       )
       .returning()
   )[0];
+};
+
+export const deleteTransactions = async (
+  transactionIDs: string[],
+  userID: string,
+) => {
+  return await db
+    .delete(transactionSchema)
+    .where(
+      and(
+        eq(transactionSchema.userID, userID),
+        inArray(transactionSchema.id, transactionIDs),
+      ),
+    )
+    .returning();
 };

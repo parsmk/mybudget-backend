@@ -5,6 +5,7 @@ import {
   getTransactions,
   patchTransaction,
   deleteTransaction,
+  deleteTransactions,
 } from "../models/transaction";
 
 export const transactionRouter = Router();
@@ -91,6 +92,22 @@ transactionRouter.patch<{ id: string }>("/:id", async (req, res) => {
     if (!transaction)
       return res.status(404).json({ error: "Could not find transaction" });
     else return res.status(200).json(transaction);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Internal error" });
+  }
+});
+
+transactionRouter.delete("/", async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids))
+      return res.status(400).json({
+        error: "Use DELETE transactions/{id} to delete 1 transaction",
+      });
+    const transactions = await deleteTransactions(ids, req.auth?.id!);
+
+    return res.status(200).json(transactions);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });
