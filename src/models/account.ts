@@ -53,10 +53,15 @@ export const getAccounts = async (
   userID: string,
   executable: SQLExecutables = db,
 ) => {
-  return await executable
-    .select()
+  const accounts = await executable
+    .select({
+      account: accountSchema,
+      balance: sql<number>`${accountSchema.cent_balance} / 100.0`,
+    })
     .from(accountSchema)
     .where(eq(accountSchema.userID, userID));
+
+  return accounts.map(({ account, balance }) => ({ ...account, balance }));
 };
 
 export const getAccount = async (
@@ -64,14 +69,19 @@ export const getAccount = async (
   userID: string,
   executable: SQLExecutables = db,
 ) => {
-  return (
+  const account = (
     await executable
-      .select()
+      .select({
+        account: accountSchema,
+        balance: sql<number>`${accountSchema.cent_balance} / 100.0`,
+      })
       .from(accountSchema)
       .where(
         and(eq(accountSchema.userID, userID), eq(accountSchema.id, accountID)),
       )
   )[0];
+
+  return { ...account.account, balance: account.balance };
 };
 
 export const patchAccount = async (

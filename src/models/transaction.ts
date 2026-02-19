@@ -74,7 +74,12 @@ export const getTransactions = async (
     : null;
 
   const rows = await executable
-    .select({ transaction: transactionSchema, category: categorySchema })
+    .select({
+      transaction: transactionSchema,
+      category: categorySchema,
+      inflow: sql<number>`${transactionSchema.cent_inflow} / 100.0`,
+      outflow: sql<number>`${transactionSchema.cent_outflow} / 100.0`,
+    })
     .from(transactionSchema)
     .leftJoin(
       categorySchema,
@@ -82,9 +87,11 @@ export const getTransactions = async (
     )
     .where(queryBuilder("and", confirmUser, filterAccount));
 
-  return rows.map(({ transaction, category }) => ({
+  return rows.map(({ transaction, category, inflow, outflow }) => ({
     ...transaction,
     category,
+    inflow,
+    outflow,
   }));
 };
 
@@ -93,14 +100,24 @@ export const getTransaction = async (
   id: string,
   executable: SQLExecutables = db,
 ) => {
-  return (
+  const transaction = (
     await executable
-      .select()
+      .select({
+        transaction: transactionSchema,
+        inflow: sql<number>`${transactionSchema.cent_inflow} / 100.0`,
+        outflow: sql<number>`${transactionSchema.cent_outflow} / 100.0`,
+      })
       .from(transactionSchema)
       .where(
         and(eq(transactionSchema.userID, userID), eq(transactionSchema.id, id)),
       )
   )[0];
+
+  return {
+    ...transaction.transaction,
+    inflow: transaction.inflow,
+    outflow: transaction.outflow,
+  };
 };
 
 export const aggregateTransactionsByCategory = async (
