@@ -80,6 +80,22 @@ export const patchAccount = async (
   )[0];
 };
 
+export const updateBalance = async (
+  accountID: string,
+  userID: string,
+  balanceChange: number,
+) => {
+  if (!balanceChange) return;
+  return await db
+    .update(accountSchema)
+    .set({
+      balance: sql`${accountSchema.balance} + ${balanceChange}`,
+    })
+    .where(
+      and(eq(accountSchema.id, accountID), eq(accountSchema.userID, userID)),
+    );
+};
+
 export const deleteAccount = async (accountID: string, userID: string) => {
   return (
     await db

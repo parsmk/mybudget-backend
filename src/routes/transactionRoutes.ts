@@ -7,6 +7,7 @@ import {
   deleteTransaction,
   deleteTransactions,
 } from "../models/transaction";
+import { updateBalance } from "../models/account";
 
 export const transactionRouter = Router();
 
@@ -19,6 +20,7 @@ transactionRouter.post("/", async (req, res) => {
 
     const errs: string[] = [];
     const transactions: TransactionInsert[] = [];
+    let balanceChange = 0;
 
     for (const dp of payload) {
       if (Number(dp.inflow ?? 0) <= 0 && Number(dp.outflow ?? 0) <= 0) {
@@ -39,9 +41,16 @@ transactionRouter.post("/", async (req, res) => {
         categoryID: dp.categoryID,
         userID: req.auth?.id!,
       });
+
+      balanceChange += (dp.inflow ?? 0) - (dp.outflow ?? 0);
     }
 
     const uploaded = await createTransactions(transactions);
+    await updateBalance(
+      uploaded[0].accountID,
+      uploaded[0].userID,
+      balanceChange,
+    );
 
     if (uploaded.length === 0 && errs.length > 0) {
       return res.status(400).json({
@@ -89,6 +98,12 @@ transactionRouter.patch<{ id: string }>("/:id", async (req, res) => {
       categoryID,
     });
 
+    await updateBalance(
+      transaction.accountID,
+      transaction.userID,
+      Number(transaction.inflow ?? 0) - Number(transaction.outflow ?? 0),
+    );
+
     if (!transaction)
       return res.status(404).json({ error: "Could not find transaction" });
     else return res.status(200).json(transaction);
@@ -107,6 +122,15 @@ transactionRouter.delete("/", async (req, res) => {
       });
     const transactions = await deleteTransactions(ids, req.auth?.id!);
 
+    await updateBalance(
+      transactions[0].accountID,
+      transactions[0].userID,
+      transactions.reduce(
+        (acc, t) => (acc += Number(t.inflow ?? 0) - Number(t.outflow ?? 0)),
+        0,
+      ),
+    );
+
     return res.status(200).json(transactions);
   } catch (error) {
     console.error(error);
@@ -117,6 +141,12 @@ transactionRouter.delete("/", async (req, res) => {
 transactionRouter.delete<{ id: string }>("/:id", async (req, res) => {
   try {
     const transaction = await deleteTransaction(req.params.id, req.auth?.id!);
+
+    await updateBalance(
+      transaction.accountID,
+      transaction.userID,
+      Number(transaction.inflow ?? 0) - Number(transaction.outflow ?? 0),
+    );
 
     if (!transaction)
       return res.status(404).json({ error: "Could not find transaction" });
