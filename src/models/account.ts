@@ -1,6 +1,6 @@
 import { check, numeric, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { InferInsertModel, InferSelectModel, sql, and, eq } from "drizzle-orm";
-import { uuidPK } from "../utils/models";
+import { SQLExecutables, uuidPK } from "../utils/models";
 import { userSchema } from "./user";
 import { db } from "../db";
 
@@ -32,9 +32,12 @@ export const accountSchema = sqliteTable(
 export type AccountInsert = InferInsertModel<typeof accountSchema>;
 export type Account = InferSelectModel<typeof accountSchema>;
 
-export const createAccount = async (account: AccountInsert) => {
+export const createAccount = async (
+  account: AccountInsert,
+  executable: SQLExecutables = db,
+) => {
   return (
-    await db
+    await executable
       .insert(accountSchema)
       .values({
         name: account.name,
@@ -46,16 +49,23 @@ export const createAccount = async (account: AccountInsert) => {
   )[0];
 };
 
-export const getAccounts = async (userID: string) => {
-  return await db
+export const getAccounts = async (
+  userID: string,
+  executable: SQLExecutables = db,
+) => {
+  return await executable
     .select()
     .from(accountSchema)
     .where(eq(accountSchema.userID, userID));
 };
 
-export const getAccount = async (accountID: string, userID: string) => {
+export const getAccount = async (
+  accountID: string,
+  userID: string,
+  executable: SQLExecutables = db,
+) => {
   return (
-    await db
+    await executable
       .select()
       .from(accountSchema)
       .where(
@@ -68,9 +78,10 @@ export const patchAccount = async (
   accountID: string,
   userID: string,
   updates: Partial<Omit<AccountInsert, "id" | "userID">>,
+  executable: SQLExecutables = db,
 ) => {
   return (
-    await db
+    await executable
       .update(accountSchema)
       .set(updates)
       .where(
@@ -84,9 +95,10 @@ export const updateBalance = async (
   accountID: string,
   userID: string,
   balanceChange: number,
+  executable: SQLExecutables = db,
 ) => {
   if (!balanceChange) return;
-  return await db
+  return await executable
     .update(accountSchema)
     .set({
       balance: sql`${accountSchema.balance} + ${balanceChange}`,
@@ -96,9 +108,13 @@ export const updateBalance = async (
     );
 };
 
-export const deleteAccount = async (accountID: string, userID: string) => {
+export const deleteAccount = async (
+  accountID: string,
+  userID: string,
+  executable: SQLExecutables = db,
+) => {
   return (
-    await db
+    await executable
       .delete(accountSchema)
       .where(
         and(eq(accountSchema.userID, userID), eq(accountSchema.id, accountID)),

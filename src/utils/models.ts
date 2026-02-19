@@ -1,11 +1,24 @@
 import { randomUUID } from "crypto";
 import { and, or, SQL } from "drizzle-orm";
 import { text } from "drizzle-orm/sqlite-core";
+import { db } from "../db";
+
+export type SQLExecutables = Pick<
+  typeof db,
+  "insert" | "select" | "update" | "delete" | "transaction"
+>;
 
 export const uuidPK = () =>
   text("id")
     .primaryKey()
     .$defaultFn(() => randomUUID());
+
+export const returnSignedInflowOrOutflow = (
+  inflow: number | string | null,
+  outflow: number | string | null,
+) => {
+  return Number(inflow ?? 0) - Number(outflow ?? 0);
+};
 
 export const queryBuilder = (
   andOr: "and" | "or",
