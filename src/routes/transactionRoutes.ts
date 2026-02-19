@@ -20,7 +20,6 @@ transactionRouter.post("/", async (req, res) => {
 
     const errs: string[] = [];
     const transactions: TransactionInsert[] = [];
-    let balanceChange = 0;
 
     for (const dp of payload) {
       if (Number(dp.inflow ?? 0) <= 0 && Number(dp.outflow ?? 0) <= 0) {
@@ -33,7 +32,7 @@ transactionRouter.post("/", async (req, res) => {
       }
 
       transactions.push({
-        date: new Date(dp.date).toISOString().slice(0, 10),
+        date: dp.date,
         inflow: dp.inflow,
         outflow: dp.outflow,
         payee: dp.payee,
@@ -41,11 +40,9 @@ transactionRouter.post("/", async (req, res) => {
         categoryID: dp.categoryID,
         userID: req.auth?.id!,
       });
-
-      balanceChange += returnSignedInflowOrOutflow(dp.inflow, dp.outflow);
     }
 
-    const uploaded = await createTransactions(transactions, balanceChange);
+    const uploaded = await createTransactions(transactions);
 
     if (uploaded.length === 0 && errs.length > 0) {
       return res.status(400).json({

@@ -39,24 +39,27 @@ export type TransactionInsert = InferInsertModel<typeof transactionSchema>;
 export type Transaction = InferSelectModel<typeof transactionSchema>;
 
 export const createTransactions = async (
-  transactions: TransactionInsert[],
-  balanceChange: number,
+  payload: TransactionInsert[],
   executable: SQLExecutables = db,
 ) => {
   return await executable.transaction(async (atomic) => {
-    const uploaded = await atomic
+    const transactions = await atomic
       .insert(transactionSchema)
-      .values(transactions)
+      .values(payload)
       .returning();
 
     await updateBalance(
-      transactions[0].accountID,
-      transactions[0].userID,
-      balanceChange,
+      payload[0].accountID,
+      payload[0].userID,
+      transactions.reduce(
+        (acc, tr) =>
+          (acc += returnSignedInflowOrOutflow(tr.inflow, tr.outflow)),
+        0,
+      ),
       atomic,
     );
 
-    return uploaded;
+    return transactions;
   });
 };
 
