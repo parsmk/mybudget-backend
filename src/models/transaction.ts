@@ -1,4 +1,4 @@
-import { numeric, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import {
   InferInsertModel,
   InferSelectModel,
@@ -23,8 +23,8 @@ import { db } from "../db";
 export const transactionSchema = sqliteTable("transaction", {
   id: uuidPK(),
   date: text().notNull(),
-  inflow: numeric(),
-  outflow: numeric(),
+  cent_inflow: integer(),
+  cent_outflow: integer(),
   payee: text().notNull(),
   accountID: text()
     .notNull()
@@ -53,7 +53,7 @@ export const createTransactions = async (
       payload[0].userID,
       transactions.reduce(
         (acc, tr) =>
-          (acc += returnSignedInflowOrOutflow(tr.inflow, tr.outflow)),
+          (acc += returnSignedInflowOrOutflow(tr.cent_inflow, tr.cent_outflow)),
         0,
       ),
       atomic,
@@ -120,7 +120,7 @@ export const aggregateTransactionsByCategory = async (
   const rows = await executable
     .select({
       categoryID: transactionSchema.categoryID,
-      amount: sql<number>`sum(${transactionSchema.outflow})`,
+      amount: sql<number>`sum(${transactionSchema.cent_outflow})`,
     })
     .from(transactionSchema)
     .where(
@@ -148,12 +148,12 @@ export const patchTransaction = async (
 
     const account = updates.accountID ?? originalTransaction.accountID;
     const oldDelta = returnSignedInflowOrOutflow(
-      originalTransaction.inflow,
-      originalTransaction.outflow,
+      originalTransaction.cent_inflow,
+      originalTransaction.cent_outflow,
     );
     const newDelta = returnSignedInflowOrOutflow(
-      updates.inflow ?? originalTransaction.inflow,
-      updates.outflow ?? originalTransaction.outflow,
+      updates.cent_inflow ?? originalTransaction.cent_inflow,
+      updates.cent_outflow ?? originalTransaction.cent_outflow,
     );
 
     if (account === originalTransaction.accountID) {
@@ -204,7 +204,10 @@ export const deleteTransaction = async (
     await updateBalance(
       transaction.accountID,
       userID,
-      -returnSignedInflowOrOutflow(transaction.inflow, transaction.outflow),
+      -returnSignedInflowOrOutflow(
+        transaction.cent_inflow,
+        transaction.cent_outflow,
+      ),
       atomic,
     );
 
@@ -233,7 +236,7 @@ export const deleteTransactions = async (
     const perAccount = new Map<string, number>();
 
     for (const t of transactions) {
-      const delta = returnSignedInflowOrOutflow(t.inflow, t.outflow);
+      const delta = returnSignedInflowOrOutflow(t.cent_inflow, t.cent_outflow);
       perAccount.set(t.accountID, (perAccount.get(t.accountID) ?? 0) + delta);
     }
 

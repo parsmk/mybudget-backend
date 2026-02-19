@@ -1,4 +1,4 @@
-import { check, numeric, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { check, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { InferInsertModel, InferSelectModel, sql, and, eq } from "drizzle-orm";
 import { SQLExecutables, uuidPK } from "../utils/models";
 import { userSchema } from "./user";
@@ -12,7 +12,7 @@ export const accountSchema = sqliteTable(
   {
     id: uuidPK(),
     name: text().notNull(),
-    balance: numeric().notNull(),
+    cent_balance: integer().notNull(),
     type: text().$type<AccountType>().notNull(),
     userID: text()
       .notNull()
@@ -41,7 +41,7 @@ export const createAccount = async (
       .insert(accountSchema)
       .values({
         name: account.name,
-        balance: account.balance,
+        cent_balance: account.cent_balance,
         type: account.type,
         userID: account.userID,
       })
@@ -101,7 +101,7 @@ export const updateBalance = async (
   return await executable
     .update(accountSchema)
     .set({
-      balance: sql`${accountSchema.balance} + ${balanceChange}`,
+      cent_balance: sql`${accountSchema.cent_balance} + ${balanceChange}`,
     })
     .where(
       and(eq(accountSchema.id, accountID), eq(accountSchema.userID, userID)),

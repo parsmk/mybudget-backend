@@ -1,7 +1,7 @@
 CREATE TABLE `account` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
-	`balance` numeric NOT NULL,
+	`cent_balance` integer NOT NULL,
 	`type` text NOT NULL,
 	`userID` text NOT NULL,
 	FOREIGN KEY (`userID`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action,
@@ -18,8 +18,8 @@ CREATE TABLE `category` (
 CREATE TABLE `transaction` (
 	`id` text PRIMARY KEY NOT NULL,
 	`date` text NOT NULL,
-	`inflow` numeric,
-	`outflow` numeric,
+	`cent_inflow` integer,
+	`cent_outflow` integer,
 	`payee` text NOT NULL,
 	`accountID` text NOT NULL,
 	`categoryID` text,

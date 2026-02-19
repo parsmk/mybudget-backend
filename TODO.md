@@ -1,3 +1,7 @@
+## All Routes
+
+- **Improve Validations**
+
 ## Auth Routes
 
 ### POST USER
@@ -13,13 +17,11 @@
 
 ### POST
 
-- Update linked accounts balance on post Transaction
 - Normalize input dates to YYYY-MM-DD | YY-MM-DD reject others
 
 ### PATCH
 
 - Patch transaction ensure `inflow && outflow !== 0`
-- Update account balance on patch Transaction
 
 ## UserSchema
 

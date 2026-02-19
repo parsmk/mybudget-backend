@@ -24,7 +24,7 @@ accountRouter.post("/", async (req, res) => {
 
     const account = await createAccount({
       name,
-      balance,
+      cent_balance: Math.round(Number(balance) * 100),
       type,
       userID: req.auth?.id!,
     });
@@ -108,7 +108,7 @@ accountRouter.patch<{ id: string }>("/:id", async (req, res) => {
 
     const account = await patchAccount(req.params.id, req.auth?.id!, {
       name,
-      balance,
+      cent_balance: balance ? Math.round(Number(balance) * 100) : undefined,
       type,
     });
 

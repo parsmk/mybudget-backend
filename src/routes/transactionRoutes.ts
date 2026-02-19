@@ -7,7 +7,6 @@ import {
   deleteTransaction,
   deleteTransactions,
 } from "../models/transaction";
-import { returnSignedInflowOrOutflow } from "../utils/models";
 
 export const transactionRouter = Router();
 
@@ -33,8 +32,8 @@ transactionRouter.post("/", async (req, res) => {
 
       transactions.push({
         date: dp.date,
-        inflow: dp.inflow,
-        outflow: dp.outflow,
+        cent_inflow: Math.round(Number(dp.inflow ?? 0) * 100),
+        cent_outflow: Math.round(Number(dp.outflow ?? 0) * 100),
         payee: dp.payee,
         accountID: dp.accountID,
         categoryID: dp.categoryID,
@@ -86,8 +85,8 @@ transactionRouter.patch<{ id: string }>("/:id", async (req, res) => {
       date,
       payee,
       accountID,
-      inflow,
-      outflow,
+      cent_inflow: Math.round(Number(inflow ?? 0) * 100),
+      cent_outflow: Math.round(Number(outflow ?? 0) * 100),
       categoryID,
     });
 

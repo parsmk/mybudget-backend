@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "d79220f3-b4eb-4a16-8f62-65e5f36566e5",
+  "id": "aa9d400b-c17a-4cef-a32b-bcda6f0aed9a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "account": {
@@ -21,9 +21,9 @@
           "notNull": true,
           "autoincrement": false
         },
-        "balance": {
-          "name": "balance",
-          "type": "numeric",
+        "cent_balance": {
+          "name": "cent_balance",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -130,16 +130,16 @@
           "notNull": true,
           "autoincrement": false
         },
-        "inflow": {
-          "name": "inflow",
-          "type": "numeric",
+        "cent_inflow": {
+          "name": "cent_inflow",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "outflow": {
-          "name": "outflow",
-          "type": "numeric",
+        "cent_outflow": {
+          "name": "cent_outflow",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
