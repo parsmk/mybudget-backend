@@ -33,7 +33,7 @@ transactionRouter.post("/", async (req, res) => {
       }
 
       transactions.push({
-        date: new Date(dp.date).toISOString(),
+        date: new Date(dp.date).toISOString().slice(0, 10),
         inflow: dp.inflow,
         outflow: dp.outflow,
         payee: dp.payee,
