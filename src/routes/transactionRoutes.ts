@@ -100,7 +100,7 @@ transactionRouter.patch<{ id: string }>("/:id", async (req, res) => {
 
 transactionRouter.delete("/", async (req, res) => {
   try {
-    const { ids } = req.body;
+    const ids = req.body;
     if (!ids || !Array.isArray(ids))
       return res.status(400).json({
         error: "Use DELETE transactions/{id} to delete 1 transaction",
