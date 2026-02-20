@@ -173,6 +173,8 @@ export const patchTransaction = async (
       updates.cent_outflow ?? originalTransaction.cent_outflow,
     );
 
+    if (newDelta === 0) throw new Error("Inflow and Outflow = 0");
+
     if (account === originalTransaction.accountID) {
       await updateBalance(account, userID, newDelta - oldDelta, atomic);
     } else {

@@ -15,14 +15,6 @@
 
 ## Transaction Routes
 
-### POST
-
-- Normalize input dates to YYYY-MM-DD | YY-MM-DD reject others
-
-### PATCH
-
-- Patch transaction ensure `inflow && outflow !== 0`
-
 ## UserSchema
 
 - Add `isActive` bool for email verification

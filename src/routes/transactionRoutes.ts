@@ -13,6 +13,8 @@ export const transactionRouter = Router();
 transactionRouter.post("/", async (req, res) => {
   try {
     const payload = Array.isArray(req.body) ? req.body : [req.body];
+    // YYYY {4 digits} - MM {01...09 | 11 12} - DD {01...09 | (1|2)0...(1|2)9 | 30 31}
+    const dateTest = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
     if (payload.length < 1)
       return res.status(400).json({ error: "No transactions supplied" });
@@ -21,19 +23,29 @@ transactionRouter.post("/", async (req, res) => {
     const transactions: TransactionInsert[] = [];
 
     for (const dp of payload) {
-      if (Number(dp.inflow ?? 0) <= 0 && Number(dp.outflow ?? 0) <= 0) {
-        errs.push("Transactions must have either inflow or outflow");
+      const inflow = Number(dp.inflow ?? 0);
+      const outflow = Number(dp.outflow ?? 0);
+      if (inflow <= 0 && outflow <= 0) {
+        errs.push("Transactions must have a non negative inflow or outflow");
+        continue;
+      }
+      if (inflow > 0 && outflow > 0) {
+        errs.push("Transactions must only have inflow or outflow");
         continue;
       }
       if (!(dp.date && dp.payee && dp.accountID)) {
         errs.push("Missing required properties: {date, payee, account}");
         continue;
       }
+      if (!dateTest.test(dp.date)) {
+        errs.push("Dates must be in YYYY-MM-DD format");
+        continue;
+      }
 
       transactions.push({
         date: dp.date,
-        cent_inflow: Math.round(Number(dp.inflow ?? 0) * 100),
-        cent_outflow: Math.round(Number(dp.outflow ?? 0) * 100),
+        cent_inflow: Math.round(inflow * 100),
+        cent_outflow: Math.round(outflow * 100),
         payee: dp.payee,
         accountID: dp.accountID,
         categoryID: dp.categoryID,
