@@ -25,15 +25,17 @@ transactionRouter.post("/", async (req, res) => {
     for (const dp of payload) {
       const inflow = Number(dp.inflow ?? 0);
       const outflow = Number(dp.outflow ?? 0);
-      if (inflow <= 0 && outflow <= 0) {
-        errs.push("Transactions must have a non negative inflow or outflow");
+      if (Number.isNaN(inflow) || Number.isNaN(outflow)) {
+        errs.push("Inflow and outflow must be valid numbers");
         continue;
       }
-      if (inflow > 0 && outflow > 0) {
-        errs.push("Transactions must only have inflow or outflow");
+      if (inflow > 0 === outflow > 0) {
+        errs.push(
+          "Transaction must have exactly one positive inflow or outflow",
+        );
         continue;
       }
-      if (!(dp.date && dp.payee && dp.accountID)) {
+      if (!(dp.date.trim() && dp.payee.trim() && dp.accountID)) {
         errs.push("Missing required properties: {date, payee, account}");
         continue;
       }

@@ -163,20 +163,32 @@ export const patchTransaction = async (
 
     if (!originalTransaction) return null;
 
-    const account = updates.accountID ?? originalTransaction.accountID;
+    const nextAccount = updates.accountID ?? originalTransaction.accountID;
+    const nextInflow = updates.cent_inflow ?? originalTransaction.cent_inflow;
+    const nextOutflow =
+      updates.cent_outflow ?? originalTransaction.cent_outflow;
+
+    if (Number(nextInflow ?? 0) > 0 === Number(nextOutflow ?? 0) > 0) {
+      throw new Error(
+        "Transaction must have exactly one positive inflow or outflow",
+      );
+    }
+
     const oldDelta = returnSignedInflowOrOutflow(
       originalTransaction.cent_inflow,
       originalTransaction.cent_outflow,
     );
-    const newDelta = returnSignedInflowOrOutflow(
-      updates.cent_inflow ?? originalTransaction.cent_inflow,
-      updates.cent_outflow ?? originalTransaction.cent_outflow,
-    );
+    const nextDelta = returnSignedInflowOrOutflow(nextInflow, nextOutflow);
 
-    if (newDelta === 0) throw new Error("Inflow and Outflow = 0");
+    const patch = {
+      ...updates,
+      accountID: nextAccount,
+      cent_inflow: nextInflow,
+      cent_outflow: nextOutflow,
+    };
 
-    if (account === originalTransaction.accountID) {
-      await updateBalance(account, userID, newDelta - oldDelta, atomic);
+    if (nextAccount === originalTransaction.accountID) {
+      await updateBalance(nextAccount, userID, nextDelta - oldDelta, atomic);
     } else {
       await updateBalance(
         originalTransaction.accountID,
@@ -184,13 +196,13 @@ export const patchTransaction = async (
         -oldDelta,
         atomic,
       );
-      await updateBalance(account, userID, newDelta, atomic);
+      await updateBalance(nextAccount, userID, nextDelta, atomic);
     }
 
     return (
       await atomic
         .update(transactionSchema)
-        .set(updates)
+        .set(patch)
         .where(
           and(
             eq(transactionSchema.id, transactionID),
