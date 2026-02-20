@@ -99,8 +99,8 @@ transactionRouter.patch<{ id: string }>("/:id", async (req, res) => {
       date,
       payee,
       accountID,
-      cent_inflow: Math.round(Number(inflow ?? 0) * 100),
-      cent_outflow: Math.round(Number(outflow ?? 0) * 100),
+      cent_inflow: inflow ? Math.round(Number(inflow) * 100) : undefined,
+      cent_outflow: outflow ? Math.round(Number(outflow) * 100) : undefined,
       categoryID,
     });
 
