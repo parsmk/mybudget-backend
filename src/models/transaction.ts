@@ -4,6 +4,7 @@ import {
   InferSelectModel,
   and,
   eq,
+  getTableColumns,
   gte,
   inArray,
   lt,
@@ -37,21 +38,26 @@ export const transactionSchema = sqliteTable("transaction", {
 
 export type TransactionInsert = InferInsertModel<typeof transactionSchema>;
 export type Transaction = InferSelectModel<typeof transactionSchema>;
+const TransactionOut = {
+  ...getTableColumns(transactionSchema),
+  inflow: sql<number>`${transactionSchema.cent_inflow} / 100.0`,
+  outflow: sql<number>`${transactionSchema.cent_outflow} / 100.0`,
+};
 
 export const createTransactions = async (
   payload: TransactionInsert[],
   executable: SQLExecutables = db,
 ) => {
-  return await executable.transaction(async (atomic) => {
-    const transactions = await atomic
+  const transactions = await executable.transaction(async (atomic) => {
+    const inserted = await atomic
       .insert(transactionSchema)
       .values(payload)
-      .returning();
+      .returning(TransactionOut);
 
     await updateBalance(
       payload[0].accountID,
       payload[0].userID,
-      transactions.reduce(
+      inserted.reduce(
         (acc, tr) =>
           (acc += returnSignedInflowOrOutflow(tr.cent_inflow, tr.cent_outflow)),
         0,
@@ -59,8 +65,10 @@ export const createTransactions = async (
       atomic,
     );
 
-    return transactions;
+    return inserted;
   });
+
+  return transactions;
 };
 
 export const getTransactions = async (
@@ -73,12 +81,10 @@ export const getTransactions = async (
     ? eq(transactionSchema.accountID, accountID)
     : null;
 
-  const rows = await executable
+  const transactions = await executable
     .select({
-      transaction: transactionSchema,
+      ...TransactionOut,
       category: categorySchema,
-      inflow: sql<number>`${transactionSchema.cent_inflow} / 100.0`,
-      outflow: sql<number>`${transactionSchema.cent_outflow} / 100.0`,
     })
     .from(transactionSchema)
     .leftJoin(
@@ -87,12 +93,7 @@ export const getTransactions = async (
     )
     .where(queryBuilder("and", confirmUser, filterAccount));
 
-  return rows.map(({ transaction, category, inflow, outflow }) => ({
-    ...transaction,
-    category,
-    inflow,
-    outflow,
-  }));
+  return transactions;
 };
 
 export const getTransaction = async (
@@ -102,22 +103,14 @@ export const getTransaction = async (
 ) => {
   const transaction = (
     await executable
-      .select({
-        transaction: transactionSchema,
-        inflow: sql<number>`${transactionSchema.cent_inflow} / 100.0`,
-        outflow: sql<number>`${transactionSchema.cent_outflow} / 100.0`,
-      })
+      .select(TransactionOut)
       .from(transactionSchema)
       .where(
         and(eq(transactionSchema.userID, userID), eq(transactionSchema.id, id)),
       )
   )[0];
 
-  return {
-    ...transaction.transaction,
-    inflow: transaction.inflow,
-    outflow: transaction.outflow,
-  };
+  return transaction;
 };
 
 export const aggregateTransactionsByCategory = async (
@@ -137,7 +130,7 @@ export const aggregateTransactionsByCategory = async (
   const rows = await executable
     .select({
       categoryID: transactionSchema.categoryID,
-      amount: sql<number>`sum(${transactionSchema.cent_outflow})`,
+      amount: sql<number>`sum(coalesce(${transactionSchema.cent_outflow}, 0)) / 100.0`,
     })
     .from(transactionSchema)
     .where(
@@ -209,7 +202,7 @@ export const patchTransaction = async (
             eq(transactionSchema.userID, userID),
           ),
         )
-        .returning()
+        .returning(TransactionOut)
     )[0];
   });
 };
@@ -229,7 +222,7 @@ export const deleteTransaction = async (
             eq(transactionSchema.userID, userID),
           ),
         )
-        .returning()
+        .returning(TransactionOut)
     )[0];
 
     await updateBalance(
@@ -260,7 +253,7 @@ export const deleteTransactions = async (
           inArray(transactionSchema.id, transactionIDs),
         ),
       )
-      .returning();
+      .returning(TransactionOut);
 
     if (transactions.length === 0) return null;
 
