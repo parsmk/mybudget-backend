@@ -1,7 +1,3 @@
-## All Routes
-
-- **Improve Validations**
-
 ## Auth Routes
 
 ### POST USER
