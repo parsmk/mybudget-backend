@@ -17,9 +17,9 @@ accountRouter.post("/", async (req, res) => {
   try {
     const { name, balance, type } = req.body;
 
-    if (!(name && Number(balance ?? 0) >= 0 && type))
+    if (!(name && Number(balance ?? 0) && type))
       return res.status(400).json({
-        error: `Missing or invalid required properties: {number, balance, and type}`,
+        error: `Missing required properties: {number, balance, and type}`,
       });
 
     const account = await createAccount({
@@ -28,6 +28,9 @@ accountRouter.post("/", async (req, res) => {
       type,
       userID: req.auth?.id!,
     });
+
+    if (!account)
+      return res.status(500).json({ error: "Error creating account" });
 
     return res.status(201).json(account);
   } catch (error) {

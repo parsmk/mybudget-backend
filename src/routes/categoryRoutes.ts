@@ -18,7 +18,11 @@ categoryRouter.post("/", async (req, res) => {
       name: dp.name,
       userID: req.auth?.id!,
     }));
+
     const categories = await createCategories(newCategories);
+
+    if (categories.length < 1)
+      return res.status(500).json({ error: "Error creating categories" });
 
     return res.status(201).json(categories);
   } catch (error) {

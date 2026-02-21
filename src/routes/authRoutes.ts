@@ -31,17 +31,16 @@ authRouter.post("/login", async (req, res) => {
     if (!user.verified)
       return res.status(403).json({ error: "User is not verified" });
 
-    const authenticate =
-      user && (await bcrypt.compare(password, user.password_hash));
+    const authenticate = await bcrypt.compare(password, user.password_hash);
 
     if (!authenticate)
       return res.status(401).json({ error: "Invalid credentials." });
 
-    const [accessToken, refreshToken] = signTokens(res, {
+    signTokens(res, {
       id: user.id,
       email: user.email,
     });
-    return res.status(200).json({ accessToken, refreshToken });
+    return res.sendStatus(200);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal Error!" });
@@ -92,7 +91,7 @@ authRouter.get("/verify", async (req, res) => {
       typeof req.query.token === "string" ? req.query.token : undefined;
     const id = typeof req.query.id === "string" ? req.query.id : undefined;
 
-    if (!id || !token)
+    if (!(id && token))
       return res.status(400).json({ error: "Missing params id and/or token" });
 
     const [updated] = await db
@@ -142,7 +141,7 @@ authRouter.post("/refresh", async (req, res) => {
       email: payload.email,
     });
 
-    return res.status(200).json({ accessToken });
+    return res.sendStatus(200);
   } catch (error) {
     console.error(error);
     return res.sendStatus(403);
