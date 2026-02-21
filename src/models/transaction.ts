@@ -129,10 +129,14 @@ export const aggregateTransactionsByCategory = async (
 
   const rows = await executable
     .select({
-      categoryID: transactionSchema.categoryID,
+      category: categorySchema,
       amount: sql<number>`sum(coalesce(${transactionSchema.cent_outflow}, 0)) / 100.0`,
     })
     .from(transactionSchema)
+    .leftJoin(
+      categorySchema,
+      eq(transactionSchema.categoryID, categorySchema.id),
+    )
     .where(
       queryBuilder("and", confirmUser, filterFrom, filterTo, filterAccount),
     )

@@ -89,7 +89,7 @@ accountRouter.get<{ id: string }>("/:id/analytics", async (req, res) => {
     const output = sumByCategory.map((cat) => {
       const amount = Number(cat.amount ?? 0);
       return {
-        categoryID: cat.categoryID,
+        category: cat.category,
         amount,
         pct: +(total > 0 ? amount / total : 0).toFixed(2),
       };
