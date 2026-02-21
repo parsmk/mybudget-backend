@@ -1,38 +1,30 @@
 import { sql, eq, and } from "drizzle-orm";
-import { AccountInsert, accountSchema } from "../models/account";
+import {
+  AccountInsert,
+  accountOutputSchema,
+  accountSchema,
+} from "../models/account";
 import { db } from "../services";
 import { SQLExecutables } from "../utils/models";
 
 export const createAccount = async (
-  account: AccountInsert,
+  account: AccountInsert[] | AccountInsert,
   executable: SQLExecutables = db,
 ) => {
-  return (
-    await executable
-      .insert(accountSchema)
-      .values({
-        name: account.name,
-        cent_balance: account.cent_balance,
-        type: account.type,
-        userID: account.userID,
-      })
-      .returning()
-  )[0];
+  return await executable
+    .insert(accountSchema)
+    .values(Array.isArray(account) ? account : [account])
+    .returning(accountOutputSchema);
 };
 
 export const getAccounts = async (
   userID: string,
   executable: SQLExecutables = db,
 ) => {
-  const accounts = await executable
-    .select({
-      account: accountSchema,
-      balance: sql<number>`${accountSchema.cent_balance} / 100.0`,
-    })
+  return await executable
+    .select(accountOutputSchema)
     .from(accountSchema)
     .where(eq(accountSchema.userID, userID));
-
-  return accounts.map(({ account, balance }) => ({ ...account, balance }));
 };
 
 export const getAccount = async (
@@ -40,19 +32,14 @@ export const getAccount = async (
   userID: string,
   executable: SQLExecutables = db,
 ) => {
-  const account = (
+  return (
     await executable
-      .select({
-        account: accountSchema,
-        balance: sql<number>`${accountSchema.cent_balance} / 100.0`,
-      })
+      .select(accountOutputSchema)
       .from(accountSchema)
       .where(
         and(eq(accountSchema.userID, userID), eq(accountSchema.id, accountID)),
       )
   )[0];
-
-  return { ...account.account, balance: account.balance };
 };
 
 export const patchAccount = async (
@@ -68,7 +55,7 @@ export const patchAccount = async (
       .where(
         and(eq(accountSchema.userID, userID), eq(accountSchema.id, accountID)),
       )
-      .returning()
+      .returning(accountOutputSchema)
   )[0];
 };
 
@@ -100,6 +87,6 @@ export const deleteAccount = async (
       .where(
         and(eq(accountSchema.userID, userID), eq(accountSchema.id, accountID)),
       )
-      .returning()
+      .returning(accountOutputSchema)
   )[0];
 };

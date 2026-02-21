@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { z as zod } from "zod";
 import {
   createAccount,
   deleteAccount,
@@ -10,29 +11,55 @@ import {
   aggregateTransactionsByCategory,
   getTransactions,
 } from "../queries/transactionQueries";
+import {
+  AccountInsert,
+  accountInsertSchema,
+  bulkAccountSelectSchema,
+  accountUpdateSchema,
+  accountSelectSchema,
+} from "../models/account";
+import { bulkTransactionSelectSchema } from "../models/transaction";
+import { formatCreateResponse } from "../utils/routes";
 
 export const accountRouter = Router();
 
 accountRouter.post("/", async (req, res) => {
   try {
-    const { name, balance, type } = req.body;
+    if (!req.body)
+      return res.status(400).json({ error: "No accounts supplied" });
 
-    if (!(name && Number(balance ?? 0) && type))
-      return res.status(400).json({
-        error: `Missing required properties: {number, balance, and type}`,
+    const payload = Array.isArray(req.body) ? req.body : [req.body];
+    const accounts: AccountInsert[] = [];
+    const errs = [];
+    for (const dp of payload) {
+      const parsed = accountInsertSchema.safeParse({
+        name: dp.name,
+        cent_balance: Math.round(Number(dp.balance) * 100),
+        type: dp.type,
       });
 
-    const account = await createAccount({
-      name,
-      cent_balance: Math.round(Number(balance) * 100),
-      type,
-      userID: req.auth?.id!,
-    });
+      if (!parsed.success) {
+        errs.push(zod.flattenError(parsed.error));
+        continue;
+      }
 
-    if (!account)
-      return res.status(500).json({ error: "Error creating account" });
+      const { name, cent_balance, type } = parsed.data;
 
-    return res.status(201).json(account);
+      accounts.push({
+        name,
+        cent_balance,
+        type,
+        userID: req.auth?.id!,
+      });
+    }
+
+    const uploaded = await createAccount(accounts);
+
+    const [status, response] = formatCreateResponse(
+      bulkAccountSelectSchema.parse(uploaded),
+      errs,
+    );
+    return res.status(status).json(response);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });
@@ -42,7 +69,7 @@ accountRouter.post("/", async (req, res) => {
 accountRouter.get("/", async (req, res) => {
   try {
     const accounts = await getAccounts(req.auth?.id!);
-    return res.status(200).json(accounts);
+    return res.status(200).json(bulkAccountSelectSchema.parse(accounts));
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });
@@ -52,9 +79,8 @@ accountRouter.get("/", async (req, res) => {
 accountRouter.get<{ id: string }>("/:id", async (req, res) => {
   try {
     const account = await getAccount(req.params.id, req.auth?.id!);
-
     if (!account) return res.status(404).json({ error: "Account not found" });
-    else return res.status(200).json(account);
+    else return res.status(200).json(accountSelectSchema.parse(account));
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });
@@ -74,7 +100,10 @@ accountRouter.get<{ id: string }>("/:id/transactions", async (req, res) => {
       from,
       to,
     );
-    return res.status(200).json(transactions);
+
+    return res
+      .status(200)
+      .json(bulkTransactionSelectSchema.parse(transactions));
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });
@@ -117,16 +146,27 @@ accountRouter.get<{ id: string }>("/:id/analytics", async (req, res) => {
 
 accountRouter.patch<{ id: string }>("/:id", async (req, res) => {
   try {
-    const { name, balance, type } = req.body;
+    const parsed = accountUpdateSchema.safeParse({
+      name: req.body.name,
+      cent_balance: req.body.balance
+        ? Math.round(Number(req.body.balance) * 100)
+        : undefined,
+      type: req.body.type,
+    });
+
+    if (!parsed.success)
+      return res.status(400).json(zod.flattenError(parsed.error));
+
+    const { name, cent_balance, type } = parsed.data;
 
     const account = await patchAccount(req.params.id, req.auth?.id!, {
       name,
-      cent_balance: balance ? Math.round(Number(balance) * 100) : undefined,
+      cent_balance,
       type,
     });
 
     if (!account) return res.status(404).json({ error: "Account not found" });
-    else return res.status(200).json(account);
+    else return res.status(200).json(accountSelectSchema.parse(account));
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });
@@ -138,7 +178,7 @@ accountRouter.delete<{ id: string }>("/:id", async (req, res) => {
     const account = await deleteAccount(req.params.id, req.auth?.id!);
 
     if (!account) return res.status(404).json({ error: "Account not found" });
-    return res.status(200).json(account);
+    return res.status(200).json(accountSelectSchema.parse(account));
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });
