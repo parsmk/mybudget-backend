@@ -4,7 +4,13 @@ import {
   createInsertSchema,
   createUpdateSchema,
 } from "drizzle-orm/zod";
-import { InferInsertModel, InferSelectModel, sql } from "drizzle-orm";
+import {
+  getColumns,
+  InferInsertModel,
+  InferSelectModel,
+  sql,
+} from "drizzle-orm";
+import { z as zod } from "zod/v4";
 import { userSchema } from "./user";
 import { uuidPK } from "../utils/models";
 
@@ -36,6 +42,25 @@ export const accountSchema = sqliteTable(
 export type AccountInsert = InferInsertModel<typeof accountSchema>;
 export type AccountSelect = InferSelectModel<typeof accountSchema>;
 
-export const accountInsertSchema = createInsertSchema(accountSchema);
-export const accountSelectSchema = createSelectSchema(accountSchema);
-export const accountUpdateSchema = createUpdateSchema(accountSchema);
+export const accountInsertSchema = createInsertSchema(accountSchema, {
+  type: zod.enum(ACCOUNT_TYPES),
+}).omit({ id: true, userID: true });
+export const bulkAccountInsertSchema = zod.array(accountInsertSchema);
+
+export const accountSelectSchema = createSelectSchema(accountSchema)
+  .extend({ balance: zod.number() })
+  .omit({
+    userID: true,
+    cent_balance: true,
+  });
+export const bulkAccountSelectSchema = zod.array(accountSelectSchema);
+
+export const accountUpdateSchema = createUpdateSchema(accountSchema, {
+  type: zod.enum(ACCOUNT_TYPES),
+}).omit({ id: true, userID: true });
+export const bulkAccountUpdateSchema = zod.array(accountUpdateSchema);
+
+export const accountOutputSchema = {
+  ...getColumns(accountSchema),
+  balance: sql<number>`${accountSchema.cent_balance} / 100.0`,
+};
