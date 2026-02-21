@@ -5,10 +5,15 @@ import {
   getColumns,
   sql,
 } from "drizzle-orm";
-import { uuidPK } from "../utils/models";
+import {
+  createInsertSchema,
+  createSelectSchema,
+  createUpdateSchema,
+} from "drizzle-orm/zod";
 import { userSchema } from "./user";
 import { categorySchema } from "./category";
 import { accountSchema } from "./account";
+import { uuidPK } from "../utils/models";
 
 export const transactionSchema = sqliteTable("transaction", {
   id: uuidPK(),
@@ -27,7 +32,11 @@ export const transactionSchema = sqliteTable("transaction", {
 
 export type TransactionInsert = InferInsertModel<typeof transactionSchema>;
 export type TransactionSelect = InferSelectModel<typeof transactionSchema>;
-export const TransactionOut = {
+
+export const transactionInsertSchema = createInsertSchema(transactionSchema);
+export const transactionSelectSchema = createSelectSchema(transactionSchema);
+export const transactionUpdateSchema = createUpdateSchema(transactionSchema);
+export const transactionOutputSchema = {
   ...getColumns(transactionSchema),
   inflow: sql<number>`coalesce(${transactionSchema.cent_inflow}, 0) / 100.0`,
   outflow: sql<number>`coalesce(${transactionSchema.cent_outflow}, 0) / 100.0`,
