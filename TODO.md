@@ -13,7 +13,6 @@
 
 ## UserSchema
 
-- Add `isActive` bool for email verification
 - Cascade delete users categories/transactions/accounts
 
 ## AccountSchema

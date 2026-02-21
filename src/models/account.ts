@@ -16,7 +16,7 @@ export const accountSchema = sqliteTable(
     type: text().$type<AccountType>().notNull(),
     userID: text()
       .notNull()
-      .references(() => userSchema.id),
+      .references(() => userSchema.id, { onDelete: "cascade" }),
   },
   (table) => [
     check(

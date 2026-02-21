@@ -9,7 +9,7 @@ export const categorySchema = sqliteTable("category", {
   name: text().notNull(),
   userID: text()
     .notNull()
-    .references(() => userSchema.id),
+    .references(() => userSchema.id, { onDelete: "cascade" }),
 });
 
 export type CategoryInsert = InferInsertModel<typeof categorySchema>;

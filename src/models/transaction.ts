@@ -29,11 +29,11 @@ export const transactionSchema = sqliteTable("transaction", {
   payee: text().notNull(),
   accountID: text()
     .notNull()
-    .references(() => accountSchema.id),
+    .references(() => accountSchema.id, { onDelete: "cascade" }),
   categoryID: text().references(() => categorySchema.id),
   userID: text()
     .notNull()
-    .references(() => userSchema.id),
+    .references(() => userSchema.id, { onDelete: "cascade" }),
 });
 
 export type TransactionInsert = InferInsertModel<typeof transactionSchema>;
