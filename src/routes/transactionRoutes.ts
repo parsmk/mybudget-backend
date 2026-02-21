@@ -1,12 +1,12 @@
 import { Router } from "express";
 import {
-  TransactionInsert,
   createTransactions,
   getTransactions,
   patchTransaction,
   deleteTransaction,
   deleteTransactions,
-} from "../models/transaction";
+} from "../queries/transactionQueries";
+import { TransactionInsert } from "../models/transaction";
 
 export const transactionRouter = Router();
 

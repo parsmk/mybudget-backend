@@ -5,11 +5,11 @@ import {
   getAccount,
   getAccounts,
   patchAccount,
-} from "../models/account";
+} from "../queries/accountQueries";
 import {
   aggregateTransactionsByCategory,
   getTransactions,
-} from "../models/transaction";
+} from "../queries/transactionQueries";
 
 export const accountRouter = Router();
 

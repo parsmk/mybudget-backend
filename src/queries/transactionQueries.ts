@@ -3,7 +3,7 @@ import { updateBalance } from "./accountQueries";
 import { categorySchema } from "../models/category";
 import {
   TransactionInsert,
-  TransactionOut,
+  transactionOutputSchema,
   transactionSchema,
 } from "../models/transaction";
 import { db } from "../services";
@@ -21,7 +21,7 @@ export const createTransactions = async (
     const inserted = await atomic
       .insert(transactionSchema)
       .values(payload)
-      .returning(TransactionOut);
+      .returning(transactionOutputSchema);
 
     await updateBalance(
       payload[0].accountID,
@@ -56,7 +56,7 @@ export const getTransactions = async (
 
   const transactions = await executable
     .select({
-      ...TransactionOut,
+      ...transactionOutputSchema,
       category: categorySchema,
     })
     .from(transactionSchema)
@@ -78,7 +78,7 @@ export const getTransaction = async (
 ) => {
   const transaction = (
     await executable
-      .select(TransactionOut)
+      .select(transactionOutputSchema)
       .from(transactionSchema)
       .where(
         and(eq(transactionSchema.userID, userID), eq(transactionSchema.id, id)),
@@ -181,7 +181,7 @@ export const patchTransaction = async (
             eq(transactionSchema.userID, userID),
           ),
         )
-        .returning(TransactionOut)
+        .returning(transactionOutputSchema)
     )[0];
   });
 };
@@ -201,7 +201,7 @@ export const deleteTransaction = async (
             eq(transactionSchema.userID, userID),
           ),
         )
-        .returning(TransactionOut)
+        .returning(transactionOutputSchema)
     )[0];
 
     await updateBalance(
@@ -232,7 +232,7 @@ export const deleteTransactions = async (
           inArray(transactionSchema.id, transactionIDs),
         ),
       )
-      .returning(TransactionOut);
+      .returning(transactionOutputSchema);
 
     if (transactions.length === 0) return null;
 

@@ -4,7 +4,7 @@ import {
   deleteCategory,
   getCategories,
   patchCategory,
-} from "../models/category";
+} from "../queries/categoryQueries";
 
 export const categoryRouter = Router();
 
