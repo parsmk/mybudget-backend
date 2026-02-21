@@ -6,7 +6,7 @@ export const logEndpoint = (
   next: NextFunction,
 ) => {
   res.on("finish", () => {
-    console.log(`${res.statusCode}: ${req.originalUrl}`);
+    console.log(`${req.method} ${res.statusCode}: ${req.originalUrl}`);
   });
   return next();
 };
