@@ -75,7 +75,11 @@ export const getTransactions = async (
   userID: string,
   accountID?: string,
   executable: SQLExecutables = db,
+  from?: string,
+  to?: string,
 ) => {
+  const filterFrom = from ? gte(transactionSchema.date, from) : null;
+  const filterTo = to ? lt(transactionSchema.date, to) : null;
   const confirmUser = eq(transactionSchema.userID, userID);
   const filterAccount = accountID
     ? eq(transactionSchema.accountID, accountID)
@@ -91,7 +95,9 @@ export const getTransactions = async (
       categorySchema,
       eq(transactionSchema.categoryID, categorySchema.id),
     )
-    .where(queryBuilder("and", confirmUser, filterAccount));
+    .where(
+      queryBuilder("and", confirmUser, filterAccount, filterFrom, filterTo),
+    );
 
   return transactions;
 };

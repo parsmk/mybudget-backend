@@ -60,7 +60,17 @@ accountRouter.get<{ id: string }>("/:id", async (req, res) => {
 
 accountRouter.get<{ id: string }>("/:id/transactions", async (req, res) => {
   try {
-    const transactions = await getTransactions(req.auth?.id!, req.params.id);
+    const from =
+      typeof req.query.from === "string" ? req.query.from : undefined;
+    const to = typeof req.query.to === "string" ? req.query.to : undefined;
+
+    const transactions = await getTransactions(
+      req.auth?.id!,
+      req.params.id,
+      undefined,
+      from,
+      to,
+    );
     return res.status(200).json(transactions);
   } catch (error) {
     console.error(error);
