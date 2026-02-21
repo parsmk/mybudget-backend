@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { and, or, SQL } from "drizzle-orm";
 import { text } from "drizzle-orm/sqlite-core";
-import { db } from "../db";
+import { db } from "../services";
 
 export type SQLExecutables = Pick<
   typeof db,

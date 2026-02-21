@@ -9,7 +9,8 @@ import {
   signTokens,
   verifyToken,
 } from "../utils/auth";
-import { db } from "../db";
+import { db } from "../services";
+import { randomUUID } from "crypto";
 
 export const authRouter = Router();
 
@@ -21,10 +22,16 @@ authRouter.post("/login", async (req, res) => {
 
     const user = (
       await db.select().from(userSchema).where(eq(userSchema.email, email))
-    ).at(0);
-    const valid = user && (await bcrypt.compare(password, user.password_hash));
+    )[0];
 
-    if (!valid) return res.status(401).json({ error: "Invalid credentials." });
+    if (!user.verified)
+      return res.status(403).json({ error: "User is not verified" });
+
+    const authenticate =
+      user && (await bcrypt.compare(password, user.password_hash));
+
+    if (!authenticate)
+      return res.status(401).json({ error: "Invalid credentials." });
 
     const [accessToken, refreshToken] = signTokens(res, {
       id: user.id,
@@ -44,15 +51,30 @@ authRouter.post("/signup", async (req, res) => {
     if (!(email && password))
       return res.status(400).json({ error: "Need email and password!" });
 
+    const verificationToken = randomUUID();
+
     const [newUser] = await db
       .insert(userSchema)
-      .values({ email: email, password_hash: await bcrypt.hash(password, 10) })
+      .values({
+        email: email,
+        password_hash: await bcrypt.hash(password, 10),
+        verified: 0,
+        verification_token: verificationToken,
+      })
       .returning();
 
     if (!newUser)
       return res.status(500).json({ error: "Error creating new user!" });
 
     return res.status(201).json({ id: newUser.id, email: newUser.email });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Internal Error!" });
+  }
+});
+
+authRouter.post("/verify", async (req, res) => {
+  try {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal Error!" });

@@ -19,7 +19,7 @@ import {
 import { userSchema } from "./user";
 import { categorySchema } from "./category";
 import { accountSchema, updateBalance } from "./account";
-import { db } from "../db";
+import { db } from "../services";
 
 export const transactionSchema = sqliteTable("transaction", {
   id: uuidPK(),

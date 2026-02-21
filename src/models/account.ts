@@ -2,7 +2,7 @@ import { check, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { InferInsertModel, InferSelectModel, sql, and, eq } from "drizzle-orm";
 import { SQLExecutables, uuidPK } from "../utils/models";
 import { userSchema } from "./user";
-import { db } from "../db";
+import { db } from "../services";
 
 export const ACCOUNT_TYPES = ["chequing", "credit", "cash"] as const;
 export type AccountType = (typeof ACCOUNT_TYPES)[number];

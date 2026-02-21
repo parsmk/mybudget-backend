@@ -2,7 +2,7 @@ import { sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { InferInsertModel, and, eq } from "drizzle-orm";
 import { uuidPK } from "../utils/models";
 import { userSchema } from "./user";
-import { db } from "../db";
+import { db } from "../services";
 
 export const categorySchema = sqliteTable("category", {
   id: uuidPK(),
