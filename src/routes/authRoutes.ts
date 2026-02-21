@@ -21,9 +21,12 @@ authRouter.post("/login", async (req, res) => {
     if (!(email && password))
       return res.status(400).json({ error: "Need email and password!" });
 
-    const user = (
-      await db.select().from(userSchema).where(eq(userSchema.email, email))
-    )[0];
+    const [user] = await db
+      .select()
+      .from(userSchema)
+      .where(eq(userSchema.email, email));
+
+    if (!user) return res.status(404).json({ error: "User not found" });
 
     if (!user.verified)
       return res.status(403).json({ error: "User is not verified" });
@@ -73,7 +76,7 @@ authRouter.post("/signup", async (req, res) => {
       from: "onboarding@resend.dev",
       to: newUser.email,
       subject: "MyBudget app - Verify email",
-      html: `<p>Verify your email using <a href="${urlString}">this link</a></p>!`,
+      html: `<p>Verify your email using <a href="${urlString}">this link</a>!</p>`,
     });
 
     return res.status(201).json({ id: newUser.id, email: newUser.email });
@@ -83,7 +86,7 @@ authRouter.post("/signup", async (req, res) => {
   }
 });
 
-authRouter.post("/verify", async (req, res) => {
+authRouter.get("/verify", async (req, res) => {
   try {
     const token =
       typeof req.query.token === "string" ? req.query.token : undefined;
