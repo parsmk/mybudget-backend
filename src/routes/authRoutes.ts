@@ -108,8 +108,7 @@ authRouter.get("/verify", async (req, res) => {
       )
       .returning();
 
-    if (updated)
-      return res.status(200).json({ id: updated.id, email: updated.email });
+    if (updated) return res.redirect(process.env.FRONT_END!);
 
     const [existing] = await db
       .select()
