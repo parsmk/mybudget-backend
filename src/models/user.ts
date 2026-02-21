@@ -5,6 +5,6 @@ export const userSchema = sqliteTable("user", {
   id: uuidPK(),
   email: text().notNull().unique(),
   password_hash: text().notNull(),
-  verified: integer().notNull(),
+  verified: integer().notNull().default(0),
   verification_token: text(),
 });

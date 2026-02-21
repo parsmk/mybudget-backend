@@ -1,6 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
+import { randomUUID } from "crypto";
 
 import { userSchema } from "../models/user";
 import {
@@ -9,8 +10,8 @@ import {
   signTokens,
   verifyToken,
 } from "../utils/auth";
-import { db } from "../services";
-import { randomUUID } from "crypto";
+import { db, resend } from "../services";
+import { queryBuilder } from "../utils/models";
 
 export const authRouter = Router();
 
@@ -66,6 +67,15 @@ authRouter.post("/signup", async (req, res) => {
     if (!newUser)
       return res.status(500).json({ error: "Error creating new user!" });
 
+    const urlString = `${process.env.ORIGIN}/verify?${new URLSearchParams({ token: verificationToken, id: newUser.id }).toString()}`;
+
+    await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: newUser.email,
+      subject: "MyBudget app - Verify email",
+      html: `<p>Verify your email using <a href="${urlString}">this link</a></p>!`,
+    });
+
     return res.status(201).json({ id: newUser.id, email: newUser.email });
   } catch (error) {
     console.error(error);
@@ -75,6 +85,38 @@ authRouter.post("/signup", async (req, res) => {
 
 authRouter.post("/verify", async (req, res) => {
   try {
+    const token =
+      typeof req.query.token === "string" ? req.query.token : undefined;
+    const id = typeof req.query.id === "string" ? req.query.id : undefined;
+
+    if (!id || !token)
+      return res.status(400).json({ error: "Missing params id and/or token" });
+
+    const [updated] = await db
+      .update(userSchema)
+      .set({ verified: 1, verification_token: null })
+      .where(
+        queryBuilder(
+          "and",
+          eq(userSchema.id, id),
+          eq(userSchema.verification_token, token),
+          eq(userSchema.verified, 0),
+        ),
+      )
+      .returning();
+
+    if (updated)
+      return res.status(200).json({ id: updated.id, email: updated.email });
+
+    const [existing] = await db
+      .select()
+      .from(userSchema)
+      .where(eq(userSchema.id, id));
+
+    if (existing && existing.verified)
+      return res.status(200).json("User is already verified");
+
+    return res.status(400).json({ error: "Invalid verification link" });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal Error!" });
