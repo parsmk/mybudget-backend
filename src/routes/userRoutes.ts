@@ -2,8 +2,9 @@ import { Router } from "express";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { z as zod } from "zod";
 
-import { userSchema } from "../models/user";
+import { userCreateSchema, userSchema, userSelectSchema } from "../models/user";
 import {
   clearTokens,
   signAccessToken,
@@ -17,13 +18,12 @@ export const authRouter = Router();
 
 authRouter.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const parsed = userSelectSchema.safeParse(req.body);
 
-    // Mimic zods errors
-    const fieldErrors: Record<string, string[]> = {};
-    if (!email) fieldErrors.email = ["Required field!"];
-    if (!password) fieldErrors.password = ["Required field!"];
-    if (!email || !password) return res.status(400).json({ fieldErrors });
+    if (!parsed.success)
+      return res.status(400).json(zod.flattenError(parsed.error));
+
+    const { email, password } = parsed.data;
 
     const [user] = await db
       .select()
@@ -53,19 +53,19 @@ authRouter.post("/login", async (req, res) => {
 
 authRouter.post("/signup", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const parsed = userCreateSchema.safeParse(req.body);
 
-    const fieldErrors: Record<string, string[]> = {};
-    if (!email) fieldErrors.email = ["Required field!"];
-    if (!password) fieldErrors.password = ["Required field!"];
-    if (!email || !password) return res.status(400).json({ fieldErrors });
+    if (!parsed.success)
+      return res.status(400).json(zod.flattenError(parsed.error));
+
+    const { email, password } = parsed.data;
 
     const verificationToken = randomUUID();
 
     const [newUser] = await db
       .insert(userSchema)
       .values({
-        email: email,
+        email: email.trim().toLowerCase(),
         password_hash: await bcrypt.hash(password, 10),
         verified: 0,
         verification_token: verificationToken,
@@ -86,6 +86,9 @@ authRouter.post("/signup", async (req, res) => {
 
     return res.status(201).json({ id: newUser.id, email: newUser.email });
   } catch (error) {
+    if (error instanceof Error && error.message?.includes("UNIQUE")) {
+      return res.status(400).json({ errors: ["Email already registered"] });
+    }
     console.error(error);
     return res.status(500).json({ errors: ["Internal Error!"] });
   }
