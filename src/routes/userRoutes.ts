@@ -30,15 +30,15 @@ authRouter.post("/login", async (req, res) => {
       .from(userSchema)
       .where(eq(userSchema.email, email));
 
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) return res.status(404).json({ errors: ["User not found"] });
 
     if (!user.verified)
-      return res.status(403).json({ error: "User is not verified" });
+      return res.status(403).json({ errors: ["User is not verified"] });
 
     const authenticate = await bcrypt.compare(password, user.password_hash);
 
     if (!authenticate)
-      return res.status(401).json({ error: "Invalid credentials." });
+      return res.status(401).json({ errors: ["Invalid credentials."] });
 
     signTokens(res, {
       id: user.id,
@@ -47,7 +47,7 @@ authRouter.post("/login", async (req, res) => {
     return res.sendStatus(200);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Internal Error!" });
+    return res.status(500).json({ errors: ["Internal Error!"] });
   }
 });
 
@@ -73,7 +73,7 @@ authRouter.post("/signup", async (req, res) => {
       .returning();
 
     if (!newUser)
-      return res.status(500).json({ error: "Error creating new user!" });
+      return res.status(500).json({ errors: ["Error creating new user!"] });
 
     const urlString = `${process.env.ORIGIN}/verify?${new URLSearchParams({ token: verificationToken, id: newUser.id }).toString()}`;
 
@@ -87,7 +87,7 @@ authRouter.post("/signup", async (req, res) => {
     return res.status(201).json({ id: newUser.id, email: newUser.email });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Internal Error!" });
+    return res.status(500).json({ errors: ["Internal Error!"] });
   }
 });
 
@@ -125,10 +125,10 @@ authRouter.get("/verify", async (req, res) => {
     if (existing && existing.verified)
       return res.redirect(process.env.FRONT_END!);
 
-    return res.status(400).json({ error: "Invalid verification link" });
+    return res.status(400).json({ errors: ["Invalid verification link"] });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Internal Error!" });
+    return res.status(500).json({ errors: ["Internal Error!"] });
   }
 });
 

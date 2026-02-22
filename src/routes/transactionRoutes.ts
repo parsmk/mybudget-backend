@@ -25,7 +25,7 @@ transactionRouter.post("/", async (req, res) => {
     const payload = Array.isArray(req.body) ? req.body : [req.body];
 
     if (payload.length < 1)
-      return res.status(400).json({ error: "No transactions supplied" });
+      return res.status(400).json({ errors: ["No transactions supplied"] });
 
     const errs = [];
     const transactions: TransactionInsert[] = [];
@@ -74,7 +74,7 @@ transactionRouter.post("/", async (req, res) => {
     return res.status(status).json(response);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ errors: ["Internal error"] });
   }
 });
 
@@ -88,7 +88,7 @@ transactionRouter.get("/", async (req, res) => {
     const to = rawTo ? dateField.safeParse(rawTo) : undefined;
 
     if (!from?.success || !to?.success)
-      return res.status(400).json({ error: "Invalid from and/or to query" });
+      return res.status(400).json({ errors: ["Invalid from and/or to query"] });
 
     const transactions = await getTransactions(
       req.auth?.id!,
@@ -102,7 +102,7 @@ transactionRouter.get("/", async (req, res) => {
       .json(bulkTransactionSelectSchema.parse(transactions));
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ errors: ["Internal error"] });
   }
 });
 
@@ -132,12 +132,12 @@ transactionRouter.patch<{ id: string }>("/:id", async (req, res) => {
     });
 
     if (!transaction)
-      return res.status(404).json({ error: "Could not find transaction" });
+      return res.status(404).json({ errors: ["Could not find transaction"] });
 
     return res.status(200).json(transactionSelectSchema.parse(transaction));
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ errors: ["Internal error"] });
   }
 });
 
@@ -146,10 +146,12 @@ transactionRouter.delete("/", async (req, res) => {
     const ids = req.body;
 
     if (!ids)
-      return res.status(400).json({ error: "Body must contain list of ids" });
+      return res
+        .status(400)
+        .json({ errors: ["Body must contain list of ids"] });
     else if (!Array.isArray(ids))
       return res.status(400).json({
-        error: "Use DELETE transactions/{id} to delete 1 transaction",
+        errors: ["Use DELETE transactions/{id} to delete 1 transaction"],
       });
 
     const transactions = await deleteTransactions(ids, req.auth?.id!);
@@ -157,14 +159,14 @@ transactionRouter.delete("/", async (req, res) => {
     if (!transactions)
       return res
         .status(404)
-        .json({ error: "Could not find any supplied transactions" });
+        .json({ errors: ["Could not find any supplied transactions"] });
 
     return res
       .status(200)
       .json(bulkTransactionSelectSchema.parse(transactions));
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ errors: ["Internal error"] });
   }
 });
 
@@ -173,11 +175,11 @@ transactionRouter.delete<{ id: string }>("/:id", async (req, res) => {
     const transaction = await deleteTransaction(req.params.id, req.auth?.id!);
 
     if (!transaction)
-      return res.status(404).json({ error: "Could not find transaction" });
+      return res.status(404).json({ errors: ["Could not find transaction"] });
     else
       return res.status(200).json(transactionSelectSchema.parse(transaction));
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ errors: ["Internal error"] });
   }
 });

@@ -27,7 +27,7 @@ export const accountRouter = Router();
 accountRouter.post("/", async (req, res) => {
   try {
     if (!req.body)
-      return res.status(400).json({ error: "No accounts supplied" });
+      return res.status(400).json({ errors: ["No accounts supplied"] });
 
     const payload = Array.isArray(req.body) ? req.body : [req.body];
     const accounts: AccountInsert[] = [];
@@ -59,7 +59,7 @@ accountRouter.post("/", async (req, res) => {
     return res.status(status).json(response);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ errors: ["Internal error"] });
   }
 });
 
@@ -69,18 +69,19 @@ accountRouter.get("/", async (req, res) => {
     return res.status(200).json(bulkAccountSelectSchema.parse(accounts));
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ errors: ["Internal error"] });
   }
 });
 
 accountRouter.get<{ id: string }>("/:id", async (req, res) => {
   try {
     const account = await getAccount(req.params.id, req.auth?.id!);
-    if (!account) return res.status(404).json({ error: "Account not found" });
+    if (!account)
+      return res.status(404).json({ errors: ["Account not found"] });
     else return res.status(200).json(accountSelectSchema.parse(account));
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ errors: ["Internal error"] });
   }
 });
 
@@ -94,7 +95,7 @@ accountRouter.get<{ id: string }>("/:id/transactions", async (req, res) => {
     const to = rawTo ? dateField.safeParse(rawTo) : undefined;
 
     if (!from?.success || !to?.success)
-      return res.status(400).json({ error: "Invalid from and/or to query" });
+      return res.status(400).json({ errors: ["Invalid from and/or to query"] });
 
     const transactions = await getTransactions(
       req.auth?.id!,
@@ -109,7 +110,7 @@ accountRouter.get<{ id: string }>("/:id/transactions", async (req, res) => {
       .json(bulkTransactionSelectSchema.parse(transactions));
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ errors: ["Internal error"] });
   }
 });
 
@@ -123,7 +124,7 @@ accountRouter.get<{ id: string }>("/:id/analytics", async (req, res) => {
     const to = rawTo ? dateField.safeParse(rawTo) : undefined;
 
     if (!from?.success || !to?.success)
-      return res.status(400).json({ error: "Invalid from and/or to query" });
+      return res.status(400).json({ errors: ["Invalid from and/or to query"] });
 
     const sumByCategory = await aggregateTransactionsByCategory(
       req.auth?.id!,
@@ -149,7 +150,7 @@ accountRouter.get<{ id: string }>("/:id/analytics", async (req, res) => {
     return res.status(200).json(output);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ errors: ["Internal error"] });
   }
 });
 
@@ -168,11 +169,12 @@ accountRouter.patch<{ id: string }>("/:id", async (req, res) => {
       type,
     });
 
-    if (!account) return res.status(404).json({ error: "Account not found" });
+    if (!account)
+      return res.status(404).json({ errors: ["Account not found"] });
     else return res.status(200).json(accountSelectSchema.parse(account));
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ errors: ["Internal error"] });
   }
 });
 
@@ -180,10 +182,11 @@ accountRouter.delete<{ id: string }>("/:id", async (req, res) => {
   try {
     const account = await deleteAccount(req.params.id, req.auth?.id!);
 
-    if (!account) return res.status(404).json({ error: "Account not found" });
+    if (!account)
+      return res.status(404).json({ errors: ["Account not found"] });
     return res.status(200).json(accountSelectSchema.parse(account));
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ errors: ["Internal error"] });
   }
 });
