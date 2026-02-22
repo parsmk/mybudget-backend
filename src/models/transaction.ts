@@ -118,6 +118,6 @@ export const bulkTransactionUpdatSchema = zod.array(transactionUpdateSchema);
 
 export const transactionOutputSchema = {
   ...getColumns(transactionSchema),
-  inflow: sql<number>`coalesce(${transactionSchema.cent_inflow}, 0) / 100.0`,
-  outflow: sql<number>`coalesce(${transactionSchema.cent_outflow}, 0) / 100.0`,
+  inflow: sql<number>`(coalesce(${transactionSchema.cent_inflow}, 0) / 100.0)::double precision`,
+  outflow: sql<number>`(coalesce(${transactionSchema.cent_outflow}, 0) / 100.0)::double precision`,
 };

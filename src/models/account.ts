@@ -31,7 +31,7 @@ export type AccountInsert = InferInsertModel<typeof accountSchema>;
 export type AccountSelect = InferSelectModel<typeof accountSchema>;
 
 const commonOmits = { user_id: true, cent_balance: true } as const;
-const commitExtends = { balance: zod.number() } as const;
+const commitExtends = { balance: zod.number() };
 
 export const accountInsertSchema = createInsertSchema(accountSchema, {
   type: zod.enum(ACCOUNT_TYPES),
@@ -54,5 +54,5 @@ export const bulkAccountUpdateSchema = zod.array(accountUpdateSchema);
 
 export const accountOutputSchema = {
   ...getColumns(accountSchema),
-  balance: sql<number>`${accountSchema.cent_balance} / 100.0`,
+  balance: sql<number>`(${accountSchema.cent_balance} / 100.0)::double precision`,
 };
