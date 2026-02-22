@@ -66,7 +66,6 @@ accountRouter.post("/", async (req, res) => {
 accountRouter.get("/", async (req, res) => {
   try {
     const accounts = await getAccounts(req.auth?.id!);
-    console.log(accounts);
     return res.status(200).json(bulkAccountSelectSchema.parse(accounts));
   } catch (error) {
     console.error(error);

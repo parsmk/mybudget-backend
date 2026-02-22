@@ -23,8 +23,6 @@ export const createTransactions = async (
       .values(payload)
       .returning(transactionOutputSchema);
 
-    console.log(inserted);
-
     await updateBalance(
       payload[0].account_id,
       payload[0].user_id,
@@ -109,7 +107,10 @@ export const aggregateTransactionsByCategory = async (
 
   const rows = await executable
     .select({
-      category: categorySchema,
+      category: {
+        id: categorySchema.id,
+        name: categorySchema.name,
+      },
       amount: sql<number>`sum(coalesce(${transactionSchema.cent_outflow}, 0)) / 100.0`,
     })
     .from(transactionSchema)
@@ -120,7 +121,7 @@ export const aggregateTransactionsByCategory = async (
     .where(
       queryBuilder("and", confirmUser, filterFrom, filterTo, filterAccount),
     )
-    .groupBy(transactionSchema.category_id);
+    .groupBy(categorySchema.id, categorySchema.name);
 
   return rows;
 };
