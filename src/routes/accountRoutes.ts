@@ -94,17 +94,18 @@ accountRouter.get<{ id: string }>("/:id/transactions", async (req, res) => {
     const from = rawFrom ? dateField.safeParse(rawFrom) : undefined;
     const to = rawTo ? dateField.safeParse(rawTo) : undefined;
 
-    if (!from?.success || !to?.success)
-      return res
-        .status(400)
-        .json(formatErrorResponse("Invalid from and/or to query"));
+    if (from && !from.success)
+      return res.status(400).json(formatErrorResponse("Invalid from query"));
+
+    if (to && !to.success)
+      return res.status(400).json(formatErrorResponse("Invalid to query"));
 
     const transactions = await getTransactions(
       req.auth?.id!,
       req.params.id,
       undefined,
-      from.data,
-      to.data,
+      from?.data,
+      to?.data,
     );
 
     return res
@@ -125,16 +126,17 @@ accountRouter.get<{ id: string }>("/:id/analytics", async (req, res) => {
     const from = rawFrom ? dateField.safeParse(rawFrom) : undefined;
     const to = rawTo ? dateField.safeParse(rawTo) : undefined;
 
-    if (!from?.success || !to?.success)
-      return res
-        .status(400)
-        .json(formatErrorResponse("Invalid from and/or to query"));
+    if (from && !from.success)
+      return res.status(400).json(formatErrorResponse("Invalid from query"));
+
+    if (to && !to.success)
+      return res.status(400).json(formatErrorResponse("Invalid to query"));
 
     const sumByCategory = await aggregateTransactionsByCategory(
       req.auth?.id!,
       req.params.id,
-      from.data,
-      to.data,
+      from?.data,
+      to?.data,
     );
 
     const total = sumByCategory.reduce(
