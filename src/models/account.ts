@@ -44,7 +44,9 @@ export type AccountSelect = InferSelectModel<typeof accountSchema>;
 
 export const accountInsertSchema = createInsertSchema(accountSchema, {
   type: zod.enum(ACCOUNT_TYPES),
-}).omit({ id: true, userID: true });
+})
+  .extend({ balance: zod.number() })
+  .omit({ id: true, userID: true, cent_balance: true });
 export const bulkAccountInsertSchema = zod.array(accountInsertSchema);
 
 export const accountSelectSchema = createSelectSchema(accountSchema)
@@ -57,7 +59,9 @@ export const bulkAccountSelectSchema = zod.array(accountSelectSchema);
 
 export const accountUpdateSchema = createUpdateSchema(accountSchema, {
   type: zod.enum(ACCOUNT_TYPES),
-}).omit({ id: true, userID: true });
+})
+  .extend({ balance: zod.number() })
+  .omit({ id: true, userID: true, cent_balance: true });
 export const bulkAccountUpdateSchema = zod.array(accountUpdateSchema);
 
 export const accountOutputSchema = {

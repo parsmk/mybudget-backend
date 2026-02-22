@@ -20,6 +20,7 @@ import {
 } from "../models/account";
 import { bulkTransactionSelectSchema } from "../models/transaction";
 import { formatCreateResponse } from "../utils/routes";
+import { dateField } from "../utils/models";
 
 export const accountRouter = Router();
 
@@ -32,22 +33,18 @@ accountRouter.post("/", async (req, res) => {
     const accounts: AccountInsert[] = [];
     const errs = [];
     for (const dp of payload) {
-      const parsed = accountInsertSchema.safeParse({
-        name: dp.name,
-        cent_balance: Math.round(Number(dp.balance) * 100),
-        type: dp.type,
-      });
+      const parsed = accountInsertSchema.safeParse(dp);
 
       if (!parsed.success) {
         errs.push(zod.flattenError(parsed.error));
         continue;
       }
 
-      const { name, cent_balance, type } = parsed.data;
+      const { name, balance, type } = parsed.data;
 
       accounts.push({
         name,
-        cent_balance,
+        cent_balance: Math.round(balance * 100),
         type,
         userID: req.auth?.id!,
       });
@@ -89,16 +86,22 @@ accountRouter.get<{ id: string }>("/:id", async (req, res) => {
 
 accountRouter.get<{ id: string }>("/:id/transactions", async (req, res) => {
   try {
-    const from =
+    const rawFrom =
       typeof req.query.from === "string" ? req.query.from : undefined;
-    const to = typeof req.query.to === "string" ? req.query.to : undefined;
+    const rawTo = typeof req.query.to === "string" ? req.query.to : undefined;
+
+    const from = rawFrom ? dateField.safeParse(rawFrom) : undefined;
+    const to = rawTo ? dateField.safeParse(rawTo) : undefined;
+
+    if (!from?.success || !to?.success)
+      return res.status(400).json({ error: "Invalid from and/or to query" });
 
     const transactions = await getTransactions(
       req.auth?.id!,
       req.params.id,
       undefined,
-      from,
-      to,
+      from.data,
+      to.data,
     );
 
     return res
@@ -112,15 +115,21 @@ accountRouter.get<{ id: string }>("/:id/transactions", async (req, res) => {
 
 accountRouter.get<{ id: string }>("/:id/analytics", async (req, res) => {
   try {
-    const from =
+    const rawFrom =
       typeof req.query.from === "string" ? req.query.from : undefined;
-    const to = typeof req.query.to === "string" ? req.query.to : undefined;
+    const rawTo = typeof req.query.to === "string" ? req.query.to : undefined;
+
+    const from = rawFrom ? dateField.safeParse(rawFrom) : undefined;
+    const to = rawTo ? dateField.safeParse(rawTo) : undefined;
+
+    if (!from?.success || !to?.success)
+      return res.status(400).json({ error: "Invalid from and/or to query" });
 
     const sumByCategory = await aggregateTransactionsByCategory(
       req.auth?.id!,
       req.params.id,
-      from,
-      to,
+      from.data,
+      to.data,
     );
 
     const total = sumByCategory.reduce(
@@ -146,22 +155,16 @@ accountRouter.get<{ id: string }>("/:id/analytics", async (req, res) => {
 
 accountRouter.patch<{ id: string }>("/:id", async (req, res) => {
   try {
-    const parsed = accountUpdateSchema.safeParse({
-      name: req.body.name,
-      cent_balance: req.body.balance
-        ? Math.round(Number(req.body.balance) * 100)
-        : undefined,
-      type: req.body.type,
-    });
+    const parsed = accountUpdateSchema.safeParse(req.body);
 
     if (!parsed.success)
       return res.status(400).json(zod.flattenError(parsed.error));
 
-    const { name, cent_balance, type } = parsed.data;
+    const { name, balance, type } = parsed.data;
 
     const account = await patchAccount(req.params.id, req.auth?.id!, {
       name,
-      cent_balance,
+      cent_balance: Math.round(balance * 100),
       type,
     });
 
