@@ -13,6 +13,7 @@ import {
 } from "../utils/auth";
 import { db, resend } from "../services";
 import { queryBuilder } from "../utils/models";
+import { formatErrorResponse } from "../utils/routes";
 
 export const authRouter = Router();
 
@@ -30,24 +31,26 @@ authRouter.post("/login", async (req, res) => {
       .from(userSchema)
       .where(eq(userSchema.email, email));
 
-    if (!user) return res.status(404).json({ errors: ["User not found"] });
+    if (!user)
+      return res.status(404).json(formatErrorResponse("User not found"));
 
     if (!user.verified)
-      return res.status(403).json({ errors: ["User is not verified"] });
+      return res.status(403).json(formatErrorResponse("User is not verified"));
 
     const authenticate = await bcrypt.compare(password, user.password_hash);
 
     if (!authenticate)
-      return res.status(401).json({ errors: ["Invalid credentials."] });
+      return res.status(401).json(formatErrorResponse("Invalid credentials."));
 
     signTokens(res, {
       id: user.id,
       email: user.email,
     });
+
     return res.sendStatus(200);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ errors: ["Internal Error!"] });
+    return res.status(500).json(formatErrorResponse("Internal Error!"));
   }
 });
 
@@ -73,9 +76,14 @@ authRouter.post("/signup", async (req, res) => {
       .returning();
 
     if (!newUser)
-      return res.status(500).json({ errors: ["Error creating new user!"] });
+      return res
+        .status(500)
+        .json(formatErrorResponse("Error creating new user!"));
 
-    const urlString = `${process.env.ORIGIN}/verify?${new URLSearchParams({ token: verificationToken, id: newUser.id }).toString()}`;
+    const urlString = `${process.env.ORIGIN}/verify?${new URLSearchParams({
+      token: verificationToken,
+      id: newUser.id,
+    }).toString()}`;
 
     await resend.emails.send({
       from: "onboarding@resend.dev",
@@ -87,10 +95,12 @@ authRouter.post("/signup", async (req, res) => {
     return res.status(201).json({ id: newUser.id, email: newUser.email });
   } catch (error) {
     if (error instanceof Error && error.message?.includes("UNIQUE")) {
-      return res.status(400).json({ errors: ["Email already registered"] });
+      return res
+        .status(400)
+        .json(formatErrorResponse("Email already registered"));
     }
     console.error(error);
-    return res.status(500).json({ errors: ["Internal Error!"] });
+    return res.status(500).json(formatErrorResponse("Internal Error!"));
   }
 });
 
@@ -128,10 +138,12 @@ authRouter.get("/verify", async (req, res) => {
     if (existing && existing.verified)
       return res.redirect(process.env.FRONT_END!);
 
-    return res.status(400).json({ errors: ["Invalid verification link"] });
+    return res
+      .status(400)
+      .json(formatErrorResponse("Invalid verification link"));
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ errors: ["Internal Error!"] });
+    return res.status(500).json(formatErrorResponse("Internal Error!"));
   }
 });
 

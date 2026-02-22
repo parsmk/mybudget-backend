@@ -24,3 +24,7 @@ export const formatCreateResponse = (
     },
   ];
 };
+
+export const formatErrorResponse = (message: string) => {
+  return { formErrors: [message] };
+};
