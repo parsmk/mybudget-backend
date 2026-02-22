@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
-import { authRouter } from "./routes/authRoutes";
+import { authRouter } from "./routes/userRoutes";
 import { transactionRouter } from "./routes/transactionRoutes";
 import { logEndpoint } from "./middleware/logEndpoint";
 import { categoryRouter } from "./routes/categoryRoutes";
