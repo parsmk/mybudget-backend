@@ -12,6 +12,7 @@ import {
   bulkTransactionSelectSchema,
   TransactionInsert,
   transactionInsertSchema,
+  TransactionSelect,
   transactionSelectSchema,
   transactionUpdateSchema,
 } from "../models/transaction";
@@ -24,7 +25,7 @@ transactionRouter.post("/", async (req, res) => {
   try {
     const payload = Array.isArray(req.body) ? req.body : [req.body];
 
-    if (payload.length < 1)
+    if (!payload || payload.length < 1)
       return res
         .status(400)
         .json(formatErrorResponse("No transactions supplied"));
@@ -33,14 +34,7 @@ transactionRouter.post("/", async (req, res) => {
     const transactions: TransactionInsert[] = [];
 
     for (const dp of payload) {
-      const parsed = transactionInsertSchema.safeParse({
-        date: dp.date,
-        inflow: dp.inflow,
-        outflow: dp.outflow,
-        payee: dp.payee,
-        accountID: dp.accountID,
-        categoryID: dp.categoryID,
-      });
+      const parsed = transactionInsertSchema.safeParse(dp);
 
       if (!parsed.success) {
         errs.push(zod.flattenError(parsed.error));
@@ -67,7 +61,9 @@ transactionRouter.post("/", async (req, res) => {
       });
     }
 
-    const uploaded = await createTransactions(transactions);
+    let uploaded: TransactionSelect[] = [];
+    if (transactions.length > 0)
+      uploaded = await createTransactions(transactions);
 
     const [status, response] = formatCreateResponse(
       bulkTransactionInsertSchema.parse(uploaded),
