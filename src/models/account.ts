@@ -42,26 +42,26 @@ export const accountSchema = sqliteTable(
 export type AccountInsert = InferInsertModel<typeof accountSchema>;
 export type AccountSelect = InferSelectModel<typeof accountSchema>;
 
+const commonOmits = { user_id: true, cent_balance: true } as const;
+const commitExtends = { balance: zod.number() } as const;
+
 export const accountInsertSchema = createInsertSchema(accountSchema, {
   type: zod.enum(ACCOUNT_TYPES),
 })
-  .extend({ balance: zod.number() })
-  .omit({ id: true, user_id: true, cent_balance: true });
+  .extend(commitExtends)
+  .omit({ id: true, ...commonOmits });
 export const bulkAccountInsertSchema = zod.array(accountInsertSchema);
 
 export const accountSelectSchema = createSelectSchema(accountSchema)
-  .extend({ balance: zod.number() })
-  .omit({
-    user_id: true,
-    cent_balance: true,
-  });
+  .extend(commitExtends)
+  .omit(commonOmits);
 export const bulkAccountSelectSchema = zod.array(accountSelectSchema);
 
 export const accountUpdateSchema = createUpdateSchema(accountSchema, {
   type: zod.enum(ACCOUNT_TYPES),
 })
-  .extend({ balance: zod.number() })
-  .omit({ id: true, user_id: true, cent_balance: true });
+  .extend(commitExtends)
+  .omit({ id: true, ...commonOmits });
 export const bulkAccountUpdateSchema = zod.array(accountUpdateSchema);
 
 export const accountOutputSchema = {

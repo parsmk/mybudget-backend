@@ -34,7 +34,7 @@ export const transactionSchema = sqliteTable("transaction", {
 export type TransactionInsert = InferInsertModel<typeof transactionSchema>;
 export type TransactionSelect = InferSelectModel<typeof transactionSchema>;
 
-const inflowOutflowInput = {
+const commonExtends = {
   inflow: zod.preprocess(
     (v) => (v === "" || v === null ? undefined : v),
     zod.coerce.number().optional(),
@@ -44,17 +44,17 @@ const inflowOutflowInput = {
     zod.coerce.number().optional(),
   ),
 };
+const commonOmits = {
+  user_id: true,
+  cent_inflow: true,
+  cent_outflow: true,
+} as const;
 
 export const transactionInsertSchema = createInsertSchema(transactionSchema, {
   date: dateField,
 })
-  .extend(inflowOutflowInput)
-  .omit({
-    id: true,
-    user_id: true,
-    cent_inflow: true,
-    cent_outflow: true,
-  })
+  .extend(commonExtends)
+  .omit({ id: true, ...commonOmits })
   .superRefine(({ inflow, outflow }, ctx) => {
     const _inflow = Number(inflow ?? 0);
     const _outflow = Number(outflow ?? 0);
@@ -78,28 +78,15 @@ export const transactionInsertSchema = createInsertSchema(transactionSchema, {
 export const bulkTransactionInsertSchema = zod.array(transactionInsertSchema);
 
 export const transactionSelectSchema = createSelectSchema(transactionSchema)
-  .extend({
-    inflow: zod.number(),
-    outflow: zod.number(),
-  })
-  .omit({
-    id: true,
-    user_id: true,
-    cent_inflow: true,
-    cent_outflow: true,
-  });
+  .extend(commonExtends)
+  .omit(commonOmits);
 export const bulkTransactionSelectSchema = zod.array(transactionSelectSchema);
 
 export const transactionUpdateSchema = createUpdateSchema(transactionSchema, {
   date: dateField,
 })
-  .extend(inflowOutflowInput)
-  .omit({
-    id: true,
-    user_id: true,
-    cent_inflow: true,
-    cent_outflow: true,
-  })
+  .extend(commonExtends)
+  .omit({ id: true, ...commonOmits })
   .superRefine(({ inflow, outflow }, ctx) => {
     if ((inflow ?? 0) < 0 || (outflow ?? 0) < 0) {
       ctx.addIssue({

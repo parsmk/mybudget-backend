@@ -20,19 +20,20 @@ export const categorySchema = sqliteTable("category", {
 export type CategoryInsert = InferInsertModel<typeof categorySchema>;
 export type CategorySelect = InferSelectModel<typeof categorySchema>;
 
+const commonOmits = { user_id: true } as const;
+
 export const categoryInsertSchema = createInsertSchema(categorySchema).omit({
   id: true,
-  user_id: true,
+  ...commonOmits,
 });
 export const bulkCategoryInsertSchema = zod.array(categoryInsertSchema);
 
-export const categorySelectSchema = createSelectSchema(categorySchema).omit({
-  user_id: true,
-});
+export const categorySelectSchema =
+  createSelectSchema(categorySchema).omit(commonOmits);
 export const bulkCategorySelectSchema = zod.array(categorySelectSchema);
 
 export const categoryUpdateSchema = createUpdateSchema(categorySchema).omit({
   id: true,
-  user_id: true,
+  ...commonOmits,
 });
 export const bulkCategoryUpdateSchema = zod.array(categoryUpdateSchema);
