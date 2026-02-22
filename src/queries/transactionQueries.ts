@@ -23,9 +23,11 @@ export const createTransactions = async (
       .values(payload)
       .returning(transactionOutputSchema);
 
+    console.log(inserted);
+
     await updateBalance(
       payload[0].account_id,
-      payload[0].account_id,
+      payload[0].user_id,
       inserted.reduce(
         (acc, tr) =>
           (acc += returnSignedInflowOrOutflow(tr.cent_inflow, tr.cent_outflow)),
