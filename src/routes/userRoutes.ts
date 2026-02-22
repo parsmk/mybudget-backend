@@ -18,8 +18,12 @@ export const authRouter = Router();
 authRouter.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!(email && password))
-      return res.status(400).json({ error: "Need email and password!" });
+
+    // Mimic zods errors
+    const fieldErrors: Record<string, string[]> = {};
+    if (!email) fieldErrors.email = ["Required field!"];
+    if (!password) fieldErrors.password = ["Required field!"];
+    if (!email || !password) return res.status(400).json({ fieldErrors });
 
     const [user] = await db
       .select()
@@ -51,8 +55,10 @@ authRouter.post("/signup", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!(email && password))
-      return res.status(400).json({ error: "Need email and password!" });
+    const fieldErrors: Record<string, string[]> = {};
+    if (!email) fieldErrors.email = ["Required field!"];
+    if (!password) fieldErrors.password = ["Required field!"];
+    if (!email || !password) return res.status(400).json({ fieldErrors });
 
     const verificationToken = randomUUID();
 
@@ -91,8 +97,10 @@ authRouter.get("/verify", async (req, res) => {
       typeof req.query.token === "string" ? req.query.token : undefined;
     const id = typeof req.query.id === "string" ? req.query.id : undefined;
 
-    if (!(id && token))
-      return res.status(400).json({ error: "Missing params id and/or token" });
+    const fieldErrors: Record<string, string[]> = {};
+    if (!token) fieldErrors.token = ["Required param!"];
+    if (!id) fieldErrors.id = ["Required param!"];
+    if (!token || !id) return res.status(400).json({ fieldErrors });
 
     const [updated] = await db
       .update(userSchema)
@@ -115,7 +123,7 @@ authRouter.get("/verify", async (req, res) => {
       .where(eq(userSchema.id, id));
 
     if (existing && existing.verified)
-      return res.status(200).json("User is already verified");
+      return res.redirect(process.env.FRONT_END!);
 
     return res.status(400).json({ error: "Invalid verification link" });
   } catch (error) {
@@ -136,7 +144,7 @@ authRouter.post("/refresh", async (req, res) => {
   try {
     const payload = verifyToken("refresh", token);
 
-    const accessToken = signAccessToken(res, {
+    signAccessToken(res, {
       id: payload.id,
       email: payload.email,
     });
