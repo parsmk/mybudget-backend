@@ -70,7 +70,7 @@ authRouter.post("/signup", async (req, res) => {
       .values({
         email: email.trim().toLowerCase(),
         password_hash: await bcrypt.hash(password, 10),
-        verified: 0,
+        verified: false,
         verification_token: verificationToken,
       })
       .onConflictDoNothing({ target: userSchema.email })
@@ -118,13 +118,13 @@ authRouter.get("/verify", async (req, res) => {
 
     const [updated] = await db
       .update(userSchema)
-      .set({ verified: 1, verification_token: null })
+      .set({ verified: true, verification_token: null })
       .where(
         queryBuilder(
           "and",
           eq(userSchema.id, id),
           eq(userSchema.verification_token, token),
-          eq(userSchema.verified, 0),
+          eq(userSchema.verified, false),
         ),
       )
       .returning();

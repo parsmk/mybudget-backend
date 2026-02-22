@@ -1,12 +1,11 @@
-import { text, sqliteTable, integer } from "drizzle-orm/sqlite-core";
-import { email, z as zod } from "zod";
-import { uuidPK } from "../utils/models";
+import { boolean, integer, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import { z as zod } from "zod";
 
-export const userSchema = sqliteTable("user", {
-  id: uuidPK(),
+export const userSchema = pgTable("user", {
+  id: uuid().primaryKey().defaultRandom(),
   email: text().notNull().unique(),
   password_hash: text().notNull(),
-  verified: integer().notNull().default(0),
+  verified: boolean().notNull().default(false),
   verification_token: text(),
 });
 

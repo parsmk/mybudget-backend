@@ -1,18 +1,17 @@
-import { sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import { pgTable, text, uuid } from "drizzle-orm/pg-core";
 import {
   createInsertSchema,
   createSelectSchema,
   createUpdateSchema,
 } from "drizzle-orm/zod";
+import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { z as zod } from "zod";
 import { userSchema } from "./user";
-import { uuidPK } from "../utils/models";
 
-export const categorySchema = sqliteTable("category", {
-  id: uuidPK(),
+export const categorySchema = pgTable("category", {
+  id: uuid().primaryKey().defaultRandom(),
   name: text().notNull(),
-  user_id: text()
+  user_id: uuid()
     .notNull()
     .references(() => userSchema.id, { onDelete: "cascade" }),
 });

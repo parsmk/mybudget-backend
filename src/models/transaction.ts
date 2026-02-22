@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { check, date, integer, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import {
   InferInsertModel,
   InferSelectModel,
@@ -14,22 +14,40 @@ import { z as zod } from "zod";
 import { userSchema } from "./user";
 import { categorySchema } from "./category";
 import { accountSchema } from "./account";
-import { uuidPK, dateField } from "../utils/models";
+import { dateField } from "../utils/models";
 
-export const transactionSchema = sqliteTable("transaction", {
-  id: uuidPK(),
-  date: text().notNull(),
-  cent_inflow: integer(),
-  cent_outflow: integer(),
-  payee: text().notNull(),
-  account_id: text()
-    .notNull()
-    .references(() => accountSchema.id, { onDelete: "cascade" }),
-  category_id: text().references(() => categorySchema.id),
-  user_id: text()
-    .notNull()
-    .references(() => userSchema.id, { onDelete: "cascade" }),
-});
+export const transactionSchema = pgTable(
+  "transaction",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    date: date().notNull(),
+    cent_inflow: integer(),
+    cent_outflow: integer(),
+    payee: text().notNull(),
+    account_id: uuid()
+      .notNull()
+      .references(() => accountSchema.id, { onDelete: "cascade" }),
+    category_id: uuid().references(() => categorySchema.id),
+    user_id: uuid()
+      .notNull()
+      .references(() => userSchema.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    check(
+      "txn_one_positive_check",
+      sql`(
+        ( ${t.cent_inflow} is null ) <> ( ${t.cent_outflow} is null )
+      )`,
+    ),
+    check(
+      "txn_nonnegative_check",
+      sql`(
+        (${t.cent_inflow} is null or ${t.cent_inflow} >= 0)
+        and (${t.cent_outflow} is null or ${t.cent_outflow} >= 0)
+      )`,
+    ),
+  ],
+);
 
 export type TransactionInsert = InferInsertModel<typeof transactionSchema>;
 export type TransactionSelect = InferSelectModel<typeof transactionSchema>;

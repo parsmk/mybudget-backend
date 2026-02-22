@@ -1,6 +1,4 @@
-import { randomUUID } from "crypto";
 import { and, or, SQL } from "drizzle-orm";
-import { text } from "drizzle-orm/sqlite-core";
 import { z as zod } from "zod";
 import { db } from "../services";
 
@@ -8,11 +6,6 @@ export type SQLExecutables = Pick<
   typeof db,
   "insert" | "select" | "update" | "delete" | "transaction"
 >;
-
-export const uuidPK = () =>
-  text("id")
-    .primaryKey()
-    .$defaultFn(() => randomUUID());
 
 export const returnSignedInflowOrOutflow = (
   inflow: number | string | null,

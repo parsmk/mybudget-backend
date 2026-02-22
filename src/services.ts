@@ -1,16 +1,13 @@
 import "dotenv/config";
-import { drizzle } from "drizzle-orm/libsql";
-import { createClient } from "@libsql/client";
+import { drizzle } from "drizzle-orm/node-postgres";
 import { Resend } from "resend";
 
 //DB
-const client = createClient({
-  url: process.env.DATABASE_URL!,
+export const db = drizzle({
+  connection: {
+    connectionString: process.env.DATABASE_URL!,
+  },
 });
-
-client.execute("PRAGMA foreign_keys = ON").catch(console.error);
-
-export const db = drizzle({ client });
 
 //RESEND
 export const resend = new Resend(process.env.RESEND_KEY);

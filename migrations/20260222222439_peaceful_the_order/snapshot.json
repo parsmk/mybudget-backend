@@ -1,310 +1,401 @@
 {
-  "version": "7",
-  "dialect": "sqlite",
-  "id": "ff7ddf59-982a-4379-9d7c-6f3e12424f40",
+  "version": "8",
+  "dialect": "postgres",
+  "id": "464ed337-6bd8-4a3a-8295-89273819852d",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
   "ddl": [
     {
+      "values": [
+        "chequing",
+        "credit",
+        "cash"
+      ],
+      "name": "type",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "account",
-      "entityType": "tables"
+      "entityType": "tables",
+      "schema": "public"
     },
     {
+      "isRlsEnabled": false,
       "name": "category",
-      "entityType": "tables"
+      "entityType": "tables",
+      "schema": "public"
     },
     {
+      "isRlsEnabled": false,
       "name": "transaction",
-      "entityType": "tables"
+      "entityType": "tables",
+      "schema": "public"
     },
     {
+      "isRlsEnabled": false,
       "name": "user",
-      "entityType": "tables"
+      "entityType": "tables",
+      "schema": "public"
     },
     {
-      "type": "text",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "gen_random_uuid()",
       "generated": null,
+      "identity": null,
       "name": "id",
       "entityType": "columns",
+      "schema": "public",
       "table": "account"
     },
     {
       "type": "text",
+      "typeSchema": null,
       "notNull": true,
-      "autoincrement": false,
+      "dimensions": 0,
       "default": null,
       "generated": null,
+      "identity": null,
       "name": "name",
       "entityType": "columns",
+      "schema": "public",
       "table": "account"
     },
     {
       "type": "integer",
+      "typeSchema": null,
       "notNull": true,
-      "autoincrement": false,
+      "dimensions": 0,
       "default": null,
       "generated": null,
+      "identity": null,
       "name": "cent_balance",
       "entityType": "columns",
+      "schema": "public",
       "table": "account"
     },
     {
-      "type": "text",
+      "type": "type",
+      "typeSchema": "public",
       "notNull": true,
-      "autoincrement": false,
+      "dimensions": 0,
       "default": null,
       "generated": null,
+      "identity": null,
       "name": "type",
       "entityType": "columns",
+      "schema": "public",
       "table": "account"
     },
     {
-      "type": "text",
+      "type": "uuid",
+      "typeSchema": null,
       "notNull": true,
-      "autoincrement": false,
+      "dimensions": 0,
       "default": null,
       "generated": null,
-      "name": "userID",
+      "identity": null,
+      "name": "user_id",
       "entityType": "columns",
+      "schema": "public",
       "table": "account"
     },
     {
-      "type": "text",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "gen_random_uuid()",
       "generated": null,
+      "identity": null,
       "name": "id",
       "entityType": "columns",
+      "schema": "public",
       "table": "category"
     },
     {
       "type": "text",
+      "typeSchema": null,
       "notNull": true,
-      "autoincrement": false,
+      "dimensions": 0,
       "default": null,
       "generated": null,
+      "identity": null,
       "name": "name",
       "entityType": "columns",
+      "schema": "public",
       "table": "category"
     },
     {
-      "type": "text",
+      "type": "uuid",
+      "typeSchema": null,
       "notNull": true,
-      "autoincrement": false,
+      "dimensions": 0,
       "default": null,
       "generated": null,
-      "name": "userID",
+      "identity": null,
+      "name": "user_id",
       "entityType": "columns",
+      "schema": "public",
       "table": "category"
     },
     {
-      "type": "text",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "gen_random_uuid()",
       "generated": null,
+      "identity": null,
       "name": "id",
       "entityType": "columns",
+      "schema": "public",
       "table": "transaction"
     },
     {
-      "type": "text",
+      "type": "date",
+      "typeSchema": null,
       "notNull": true,
-      "autoincrement": false,
+      "dimensions": 0,
       "default": null,
       "generated": null,
+      "identity": null,
       "name": "date",
       "entityType": "columns",
+      "schema": "public",
       "table": "transaction"
     },
     {
       "type": "integer",
+      "typeSchema": null,
       "notNull": false,
-      "autoincrement": false,
+      "dimensions": 0,
       "default": null,
       "generated": null,
+      "identity": null,
       "name": "cent_inflow",
       "entityType": "columns",
+      "schema": "public",
       "table": "transaction"
     },
     {
       "type": "integer",
+      "typeSchema": null,
       "notNull": false,
-      "autoincrement": false,
+      "dimensions": 0,
       "default": null,
       "generated": null,
+      "identity": null,
       "name": "cent_outflow",
       "entityType": "columns",
+      "schema": "public",
       "table": "transaction"
     },
     {
       "type": "text",
+      "typeSchema": null,
       "notNull": true,
-      "autoincrement": false,
+      "dimensions": 0,
       "default": null,
       "generated": null,
+      "identity": null,
       "name": "payee",
       "entityType": "columns",
+      "schema": "public",
       "table": "transaction"
     },
     {
-      "type": "text",
+      "type": "uuid",
+      "typeSchema": null,
       "notNull": true,
-      "autoincrement": false,
+      "dimensions": 0,
       "default": null,
       "generated": null,
-      "name": "accountID",
+      "identity": null,
+      "name": "account_id",
       "entityType": "columns",
+      "schema": "public",
       "table": "transaction"
     },
     {
-      "type": "text",
+      "type": "uuid",
+      "typeSchema": null,
       "notNull": false,
-      "autoincrement": false,
+      "dimensions": 0,
       "default": null,
       "generated": null,
-      "name": "categoryID",
+      "identity": null,
+      "name": "category_id",
       "entityType": "columns",
+      "schema": "public",
       "table": "transaction"
     },
     {
-      "type": "text",
+      "type": "uuid",
+      "typeSchema": null,
       "notNull": true,
-      "autoincrement": false,
+      "dimensions": 0,
       "default": null,
       "generated": null,
-      "name": "userID",
+      "identity": null,
+      "name": "user_id",
       "entityType": "columns",
+      "schema": "public",
       "table": "transaction"
     },
     {
-      "type": "text",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "gen_random_uuid()",
       "generated": null,
+      "identity": null,
       "name": "id",
       "entityType": "columns",
+      "schema": "public",
       "table": "user"
     },
     {
       "type": "text",
+      "typeSchema": null,
       "notNull": true,
-      "autoincrement": false,
+      "dimensions": 0,
       "default": null,
       "generated": null,
+      "identity": null,
       "name": "email",
       "entityType": "columns",
+      "schema": "public",
       "table": "user"
     },
     {
       "type": "text",
+      "typeSchema": null,
       "notNull": true,
-      "autoincrement": false,
+      "dimensions": 0,
       "default": null,
       "generated": null,
+      "identity": null,
       "name": "password_hash",
       "entityType": "columns",
+      "schema": "public",
       "table": "user"
     },
     {
-      "type": "integer",
+      "type": "boolean",
+      "typeSchema": null,
       "notNull": true,
-      "autoincrement": false,
-      "default": "0",
+      "dimensions": 0,
+      "default": "false",
       "generated": null,
+      "identity": null,
       "name": "verified",
       "entityType": "columns",
+      "schema": "public",
       "table": "user"
     },
     {
       "type": "text",
+      "typeSchema": null,
       "notNull": false,
-      "autoincrement": false,
+      "dimensions": 0,
       "default": null,
       "generated": null,
+      "identity": null,
       "name": "verification_token",
       "entityType": "columns",
+      "schema": "public",
       "table": "user"
     },
     {
+      "nameExplicit": false,
       "columns": [
-        "userID"
+        "user_id"
       ],
+      "schemaTo": "public",
       "tableTo": "user",
       "columnsTo": [
         "id"
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
-      "nameExplicit": false,
-      "name": "fk_account_userID_user_id_fk",
+      "name": "account_user_id_user_id_fkey",
       "entityType": "fks",
+      "schema": "public",
       "table": "account"
     },
     {
+      "nameExplicit": false,
       "columns": [
-        "userID"
+        "user_id"
       ],
+      "schemaTo": "public",
       "tableTo": "user",
       "columnsTo": [
         "id"
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
-      "nameExplicit": false,
-      "name": "fk_category_userID_user_id_fk",
+      "name": "category_user_id_user_id_fkey",
       "entityType": "fks",
+      "schema": "public",
       "table": "category"
     },
     {
+      "nameExplicit": false,
       "columns": [
-        "accountID"
+        "account_id"
       ],
+      "schemaTo": "public",
       "tableTo": "account",
       "columnsTo": [
         "id"
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
-      "nameExplicit": false,
-      "name": "fk_transaction_accountID_account_id_fk",
+      "name": "transaction_account_id_account_id_fkey",
       "entityType": "fks",
+      "schema": "public",
       "table": "transaction"
     },
     {
+      "nameExplicit": false,
       "columns": [
-        "categoryID"
+        "category_id"
       ],
+      "schemaTo": "public",
       "tableTo": "category",
       "columnsTo": [
         "id"
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
-      "nameExplicit": false,
-      "name": "fk_transaction_categoryID_category_id_fk",
+      "name": "transaction_category_id_category_id_fkey",
       "entityType": "fks",
+      "schema": "public",
       "table": "transaction"
     },
     {
+      "nameExplicit": false,
       "columns": [
-        "userID"
+        "user_id"
       ],
+      "schemaTo": "public",
       "tableTo": "user",
       "columnsTo": [
         "id"
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
-      "nameExplicit": false,
-      "name": "fk_transaction_userID_user_id_fk",
+      "name": "transaction_user_id_user_id_fkey",
       "entityType": "fks",
+      "schema": "public",
       "table": "transaction"
     },
     {
@@ -312,7 +403,8 @@
         "id"
       ],
       "nameExplicit": false,
-      "name": "account_pk",
+      "name": "account_pkey",
+      "schema": "public",
       "table": "account",
       "entityType": "pks"
     },
@@ -321,7 +413,8 @@
         "id"
       ],
       "nameExplicit": false,
-      "name": "category_pk",
+      "name": "category_pkey",
+      "schema": "public",
       "table": "category",
       "entityType": "pks"
     },
@@ -330,7 +423,8 @@
         "id"
       ],
       "nameExplicit": false,
-      "name": "transaction_pk",
+      "name": "transaction_pkey",
+      "schema": "public",
       "table": "transaction",
       "entityType": "pks"
     },
@@ -339,24 +433,35 @@
         "id"
       ],
       "nameExplicit": false,
-      "name": "user_pk",
+      "name": "user_pkey",
+      "schema": "public",
       "table": "user",
       "entityType": "pks"
     },
     {
+      "nameExplicit": false,
       "columns": [
         "email"
       ],
-      "nameExplicit": false,
-      "name": "user_email_unique",
-      "entityType": "uniques",
-      "table": "user"
+      "nullsNotDistinct": false,
+      "name": "user_email_key",
+      "schema": "public",
+      "table": "user",
+      "entityType": "uniques"
     },
     {
-      "value": "\"type\" in ('chequing', 'credit', 'cash')",
-      "name": "account_type_check",
+      "value": "(\n        ( \"cent_inflow\" is null ) <> ( \"cent_outflow\" is null )\n      )",
+      "name": "txn_one_positive_check",
       "entityType": "checks",
-      "table": "account"
+      "schema": "public",
+      "table": "transaction"
+    },
+    {
+      "value": "(\n        (\"cent_inflow\" is null or \"cent_inflow\" >= 0)\n        and (\"cent_outflow\" is null or \"cent_outflow\" >= 0)\n      )",
+      "name": "txn_nonnegative_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "transaction"
     }
   ],
   "renames": []

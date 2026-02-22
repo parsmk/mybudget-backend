@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres
+    restart: unless-stopped
+    container_name: mybudgetDB
+    environment:
+      POSTGRES_DB: mybudget
+      POSTGRES_USER: mybudget
+      POSTGRES_PASSWORD: mybudget
+    ports:
+      - "6000:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+
+volumes:
+  pgdata:
