@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { and, or, SQL } from "drizzle-orm";
 import { text } from "drizzle-orm/sqlite-core";
+import { z as zod } from "zod";
 import { db } from "../services";
 
 export type SQLExecutables = Pick<
@@ -29,3 +30,19 @@ export const queryBuilder = (
   else if (valid.length === 1) return valid[0];
   return andOr === "and" ? and(...valid) : or(...valid);
 };
+
+export const dateField = zod
+  .string()
+  .regex(
+    /^\d{4}-\d{2}-\d{2}$/,
+    "Date must be in the following format: YYYY-MM-DD",
+  )
+  .refine((val) => {
+    const [y, m, d] = val.split("-").map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    return (
+      dt.getUTCFullYear() === y &&
+      dt.getUTCMonth() === m - 1 &&
+      dt.getUTCDate() === d
+    );
+  }, "Invalid calendar date");

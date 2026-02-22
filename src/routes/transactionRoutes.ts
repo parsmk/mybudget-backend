@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { z as zod } from "zod";
 import {
   createTransactions,
   getTransactions,
@@ -6,75 +7,65 @@ import {
   deleteTransaction,
   deleteTransactions,
 } from "../queries/transactionQueries";
-import { TransactionInsert } from "../models/transaction";
+import {
+  bulkTransactionInsertSchema,
+  bulkTransactionSelectSchema,
+  TransactionInsert,
+  transactionInsertSchema,
+  transactionSelectSchema,
+  transactionUpdateSchema,
+} from "../models/transaction";
+import { formatCreateResponse } from "../utils/routes";
+import { dateField } from "../utils/models";
 
 export const transactionRouter = Router();
 
 transactionRouter.post("/", async (req, res) => {
   try {
     const payload = Array.isArray(req.body) ? req.body : [req.body];
-    // YYYY {4 digits} - MM {01...09 | 11 12} - DD {01...09 | (1|2)0...(1|2)9 | 30 31}
-    const dateTest = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
     if (payload.length < 1)
       return res.status(400).json({ error: "No transactions supplied" });
 
-    const errs: string[] = [];
+    const errs = [];
     const transactions: TransactionInsert[] = [];
 
     for (const dp of payload) {
-      const inflow = Number(dp.inflow ?? 0);
-      const outflow = Number(dp.outflow ?? 0);
-      if (Number.isNaN(inflow) || Number.isNaN(outflow)) {
-        errs.push("Inflow and outflow must be valid numbers");
-        continue;
-      }
-      if (inflow > 0 === outflow > 0) {
-        errs.push(
-          "Transaction must have exactly one positive inflow or outflow",
-        );
-        continue;
-      }
-      if (!(dp.date.trim() && dp.payee.trim() && dp.accountID)) {
-        errs.push("Missing required properties: {date, payee, account}");
-        continue;
-      }
-      if (!dateTest.test(dp.date)) {
-        errs.push("Dates must be in YYYY-MM-DD format");
-        continue;
-      }
-
-      transactions.push({
+      const parsed = transactionInsertSchema.safeParse({
         date: dp.date,
-        cent_inflow: Math.round(inflow * 100),
-        cent_outflow: Math.round(outflow * 100),
+        inflow: dp.inflow,
+        outflow: dp.outflow,
         payee: dp.payee,
         accountID: dp.accountID,
         categoryID: dp.categoryID,
+      });
+
+      if (!parsed.success) {
+        errs.push(zod.flattenError(parsed.error));
+        continue;
+      }
+
+      const { date, payee, accountID, categoryID, inflow, outflow } =
+        parsed.data;
+
+      transactions.push({
+        date,
+        cent_inflow: inflow ? Math.round(inflow * 100) : undefined,
+        cent_outflow: outflow ? Math.round(outflow * 100) : undefined,
+        payee,
+        accountID,
+        categoryID,
         userID: req.auth?.id!,
       });
     }
 
     const uploaded = await createTransactions(transactions);
 
-    if (uploaded.length === 0 && errs.length > 0) {
-      return res.status(400).json({
-        errors: { count: errs.length, reasons: errs },
-        success: { count: 0, uploaded: [] },
-      });
-    }
-
-    if (uploaded.length > 0 && errs.length > 0) {
-      return res.status(200).json({
-        errors: { count: errs.length, reasons: errs },
-        success: { count: uploaded.length, uploaded },
-      });
-    }
-
-    return res.status(201).json({
-      errors: { count: 0, reasons: [] },
-      success: { count: uploaded.length, uploaded },
-    });
+    const [status, response] = formatCreateResponse(
+      bulkTransactionInsertSchema.parse(uploaded),
+      errs,
+    );
+    return res.status(status).json(response);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });
@@ -83,18 +74,26 @@ transactionRouter.post("/", async (req, res) => {
 
 transactionRouter.get("/", async (req, res) => {
   try {
-    const from =
+    const rawFrom =
       typeof req.query.from === "string" ? req.query.from : undefined;
-    const to = typeof req.query.to === "string" ? req.query.to : undefined;
+    const rawTo = typeof req.query.to === "string" ? req.query.to : undefined;
+
+    const from = rawFrom ? dateField.safeParse(rawFrom) : undefined;
+    const to = rawTo ? dateField.safeParse(rawTo) : undefined;
+
+    if (!from?.success || !to?.success)
+      return res.status(400).json({ error: "Invalid from and/or to query" });
 
     const transactions = await getTransactions(
       req.auth?.id!,
       undefined,
       undefined,
-      from,
-      to,
+      from.data,
+      to.data,
     );
-    return res.status(200).json(transactions);
+    return res
+      .status(200)
+      .json(bulkTransactionSelectSchema.parse(transactions));
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });
@@ -103,7 +102,12 @@ transactionRouter.get("/", async (req, res) => {
 
 transactionRouter.patch<{ id: string }>("/:id", async (req, res) => {
   try {
-    const { date, payee, accountID, inflow, outflow, categoryID } = req.body;
+    const parsed = transactionUpdateSchema.safeParse(req.body);
+
+    if (!parsed.success)
+      return res.status(400).json(zod.flattenError(parsed.error));
+
+    const { date, payee, accountID, inflow, outflow, categoryID } = parsed.data;
 
     const transaction = await patchTransaction(req.params.id, req.auth?.id!, {
       date,
@@ -117,7 +121,7 @@ transactionRouter.patch<{ id: string }>("/:id", async (req, res) => {
     if (!transaction)
       return res.status(404).json({ error: "Could not find transaction" });
 
-    return res.status(200).json(transaction);
+    return res.status(200).json(transactionSelectSchema.parse(transaction));
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });
@@ -127,16 +131,24 @@ transactionRouter.patch<{ id: string }>("/:id", async (req, res) => {
 transactionRouter.delete("/", async (req, res) => {
   try {
     const ids = req.body;
-    if (!ids || !Array.isArray(ids))
+
+    if (!ids)
+      return res.status(400).json({ error: "Body must contain list of ids" });
+    else if (!Array.isArray(ids))
       return res.status(400).json({
         error: "Use DELETE transactions/{id} to delete 1 transaction",
       });
+
     const transactions = await deleteTransactions(ids, req.auth?.id!);
 
     if (!transactions)
-      return res.status(404).json({ error: "Could not find any transactions" });
+      return res
+        .status(404)
+        .json({ error: "Could not find any supplied transactions" });
 
-    return res.status(200).json(transactions);
+    return res
+      .status(200)
+      .json(bulkTransactionSelectSchema.parse(transactions));
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });
@@ -149,7 +161,8 @@ transactionRouter.delete<{ id: string }>("/:id", async (req, res) => {
 
     if (!transaction)
       return res.status(404).json({ error: "Could not find transaction" });
-    else return res.status(200).json(transaction);
+    else
+      return res.status(200).json(transactionSelectSchema.parse(transaction));
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal error" });

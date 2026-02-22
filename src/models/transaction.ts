@@ -14,7 +14,7 @@ import { z as zod } from "zod";
 import { userSchema } from "./user";
 import { categorySchema } from "./category";
 import { accountSchema } from "./account";
-import { uuidPK } from "../utils/models";
+import { uuidPK, dateField } from "../utils/models";
 
 export const transactionSchema = sqliteTable("transaction", {
   id: uuidPK(),
@@ -34,12 +34,47 @@ export const transactionSchema = sqliteTable("transaction", {
 export type TransactionInsert = InferInsertModel<typeof transactionSchema>;
 export type TransactionSelect = InferSelectModel<typeof transactionSchema>;
 
-export const transactionInsertSchema = createInsertSchema(
-  transactionSchema,
-).omit({
-  id: true,
-  userID: true,
-});
+const inflowOutflowInput = {
+  inflow: zod.preprocess(
+    (v) => (v === "" || v === null ? undefined : v),
+    zod.coerce.number().optional(),
+  ),
+  outflow: zod.preprocess(
+    (v) => (v === "" || v === null ? undefined : v),
+    zod.coerce.number().optional(),
+  ),
+};
+
+export const transactionInsertSchema = createInsertSchema(transactionSchema, {
+  date: dateField,
+})
+  .extend(inflowOutflowInput)
+  .omit({
+    id: true,
+    userID: true,
+    cent_inflow: true,
+    cent_outflow: true,
+  })
+  .superRefine(({ inflow, outflow }, ctx) => {
+    const _inflow = Number(inflow ?? 0);
+    const _outflow = Number(outflow ?? 0);
+    if (_inflow < 0 || _outflow < 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Inflow and outflow cannot be negative",
+        path: [],
+      });
+      return;
+    }
+
+    if (_inflow > 0 === _outflow > 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Transaction must have exactly one positive inflow or outflow",
+        path: [],
+      });
+    }
+  });
 export const bulkTransactionInsertSchema = zod.array(transactionInsertSchema);
 
 export const transactionSelectSchema = createSelectSchema(transactionSchema)
@@ -55,12 +90,25 @@ export const transactionSelectSchema = createSelectSchema(transactionSchema)
   });
 export const bulkTransactionSelectSchema = zod.array(transactionSelectSchema);
 
-export const transactionUpdateSchema = createUpdateSchema(
-  transactionSchema,
-).omit({
-  id: true,
-  userID: true,
-});
+export const transactionUpdateSchema = createUpdateSchema(transactionSchema, {
+  date: dateField,
+})
+  .extend(inflowOutflowInput)
+  .omit({
+    id: true,
+    userID: true,
+    cent_inflow: true,
+    cent_outflow: true,
+  })
+  .superRefine(({ inflow, outflow }, ctx) => {
+    if ((inflow ?? 0) < 0 || (outflow ?? 0) < 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Inflow and outflow cannot be negative",
+        path: [],
+      });
+    }
+  });
 export const bulkTransactionUpdatSchema = zod.array(transactionUpdateSchema);
 
 export const transactionOutputSchema = {
