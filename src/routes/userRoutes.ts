@@ -73,12 +73,13 @@ authRouter.post("/signup", async (req, res) => {
         verified: 0,
         verification_token: verificationToken,
       })
+      .onConflictDoNothing({ target: userSchema.email })
       .returning();
 
     if (!newUser)
       return res
-        .status(500)
-        .json(formatErrorResponse("Error creating new user!"));
+        .status(409)
+        .json(formatErrorResponse("Email already registered!"));
 
     const urlString = `${process.env.ORIGIN}/verify?${new URLSearchParams({
       token: verificationToken,
