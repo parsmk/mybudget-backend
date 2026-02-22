@@ -10,7 +10,7 @@ export const getCategories = async (userID: string) => {
   return await db
     .select()
     .from(categorySchema)
-    .where(eq(categorySchema.userID, userID));
+    .where(eq(categorySchema.user_id, userID));
 };
 
 export const patchCategory = async (
@@ -25,7 +25,7 @@ export const patchCategory = async (
       .where(
         and(
           eq(categorySchema.id, categoryID),
-          eq(categorySchema.userID, userID),
+          eq(categorySchema.user_id, userID),
         ),
       )
       .returning()
@@ -39,7 +39,7 @@ export const deleteCategory = async (categoryID: string, userID: string) => {
       .where(
         and(
           eq(categorySchema.id, categoryID),
-          eq(categorySchema.userID, userID),
+          eq(categorySchema.user_id, userID),
         ),
       )
       .returning()

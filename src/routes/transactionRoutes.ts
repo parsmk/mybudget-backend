@@ -45,17 +45,23 @@ transactionRouter.post("/", async (req, res) => {
         continue;
       }
 
-      const { date, payee, accountID, categoryID, inflow, outflow } =
-        parsed.data;
+      const {
+        date,
+        payee,
+        account_id: accountID,
+        category_id: categoryID,
+        inflow,
+        outflow,
+      } = parsed.data;
 
       transactions.push({
         date,
         cent_inflow: inflow ? Math.round(inflow * 100) : undefined,
         cent_outflow: outflow ? Math.round(outflow * 100) : undefined,
         payee,
-        accountID,
-        categoryID,
-        userID: req.auth?.id!,
+        account_id: accountID,
+        category_id: categoryID,
+        user_id: req.auth?.id!,
       });
     }
 
@@ -107,15 +113,22 @@ transactionRouter.patch<{ id: string }>("/:id", async (req, res) => {
     if (!parsed.success)
       return res.status(400).json(zod.flattenError(parsed.error));
 
-    const { date, payee, accountID, inflow, outflow, categoryID } = parsed.data;
+    const {
+      date,
+      payee,
+      account_id: accountID,
+      inflow,
+      outflow,
+      category_id: categoryID,
+    } = parsed.data;
 
     const transaction = await patchTransaction(req.params.id, req.auth?.id!, {
       date,
       payee,
-      accountID,
+      account_id: accountID,
       cent_inflow: inflow ? Math.round(Number(inflow) * 100) : undefined,
       cent_outflow: outflow ? Math.round(Number(outflow) * 100) : undefined,
-      categoryID,
+      category_id: categoryID,
     });
 
     if (!transaction)

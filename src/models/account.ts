@@ -24,7 +24,7 @@ export const accountSchema = sqliteTable(
     name: text().notNull(),
     cent_balance: integer().notNull(),
     type: text().$type<AccountType>().notNull(),
-    userID: text()
+    user_id: text()
       .notNull()
       .references(() => userSchema.id, { onDelete: "cascade" }),
   },
@@ -46,13 +46,13 @@ export const accountInsertSchema = createInsertSchema(accountSchema, {
   type: zod.enum(ACCOUNT_TYPES),
 })
   .extend({ balance: zod.number() })
-  .omit({ id: true, userID: true, cent_balance: true });
+  .omit({ id: true, user_id: true, cent_balance: true });
 export const bulkAccountInsertSchema = zod.array(accountInsertSchema);
 
 export const accountSelectSchema = createSelectSchema(accountSchema)
   .extend({ balance: zod.number() })
   .omit({
-    userID: true,
+    user_id: true,
     cent_balance: true,
   });
 export const bulkAccountSelectSchema = zod.array(accountSelectSchema);
@@ -61,7 +61,7 @@ export const accountUpdateSchema = createUpdateSchema(accountSchema, {
   type: zod.enum(ACCOUNT_TYPES),
 })
   .extend({ balance: zod.number() })
-  .omit({ id: true, userID: true, cent_balance: true });
+  .omit({ id: true, user_id: true, cent_balance: true });
 export const bulkAccountUpdateSchema = zod.array(accountUpdateSchema);
 
 export const accountOutputSchema = {

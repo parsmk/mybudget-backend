@@ -22,11 +22,11 @@ export const transactionSchema = sqliteTable("transaction", {
   cent_inflow: integer(),
   cent_outflow: integer(),
   payee: text().notNull(),
-  accountID: text()
+  account_id: text()
     .notNull()
     .references(() => accountSchema.id, { onDelete: "cascade" }),
-  categoryID: text().references(() => categorySchema.id),
-  userID: text()
+  category_id: text().references(() => categorySchema.id),
+  user_id: text()
     .notNull()
     .references(() => userSchema.id, { onDelete: "cascade" }),
 });
@@ -51,7 +51,7 @@ export const transactionInsertSchema = createInsertSchema(transactionSchema, {
   .extend(inflowOutflowInput)
   .omit({
     id: true,
-    userID: true,
+    user_id: true,
     cent_inflow: true,
     cent_outflow: true,
   })
@@ -84,7 +84,7 @@ export const transactionSelectSchema = createSelectSchema(transactionSchema)
   })
   .omit({
     id: true,
-    userID: true,
+    user_id: true,
     cent_inflow: true,
     cent_outflow: true,
   });
@@ -96,7 +96,7 @@ export const transactionUpdateSchema = createUpdateSchema(transactionSchema, {
   .extend(inflowOutflowInput)
   .omit({
     id: true,
-    userID: true,
+    user_id: true,
     cent_inflow: true,
     cent_outflow: true,
   })

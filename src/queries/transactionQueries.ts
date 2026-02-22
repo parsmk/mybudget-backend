@@ -24,8 +24,8 @@ export const createTransactions = async (
       .returning(transactionOutputSchema);
 
     await updateBalance(
-      payload[0].accountID,
-      payload[0].userID,
+      payload[0].account_id,
+      payload[0].account_id,
       inserted.reduce(
         (acc, tr) =>
           (acc += returnSignedInflowOrOutflow(tr.cent_inflow, tr.cent_outflow)),
@@ -49,9 +49,9 @@ export const getTransactions = async (
 ) => {
   const filterFrom = from ? gte(transactionSchema.date, from) : null;
   const filterTo = to ? lt(transactionSchema.date, to) : null;
-  const confirmUser = eq(transactionSchema.userID, userID);
+  const confirmUser = eq(transactionSchema.user_id, userID);
   const filterAccount = accountID
-    ? eq(transactionSchema.accountID, accountID)
+    ? eq(transactionSchema.account_id, accountID)
     : null;
 
   const transactions = await executable
@@ -62,7 +62,7 @@ export const getTransactions = async (
     .from(transactionSchema)
     .leftJoin(
       categorySchema,
-      eq(transactionSchema.categoryID, categorySchema.id),
+      eq(transactionSchema.category_id, categorySchema.id),
     )
     .where(
       queryBuilder("and", confirmUser, filterAccount, filterFrom, filterTo),
@@ -81,7 +81,10 @@ export const getTransaction = async (
       .select(transactionOutputSchema)
       .from(transactionSchema)
       .where(
-        and(eq(transactionSchema.userID, userID), eq(transactionSchema.id, id)),
+        and(
+          eq(transactionSchema.user_id, userID),
+          eq(transactionSchema.id, id),
+        ),
       )
   )[0];
 
@@ -95,11 +98,11 @@ export const aggregateTransactionsByCategory = async (
   to?: string,
   executable: SQLExecutables = db,
 ) => {
-  const confirmUser = eq(transactionSchema.userID, userID);
+  const confirmUser = eq(transactionSchema.user_id, userID);
   const filterFrom = from ? gte(transactionSchema.date, from) : null;
   const filterTo = to ? lt(transactionSchema.date, to) : null;
   const filterAccount = accountID
-    ? eq(transactionSchema.accountID, accountID)
+    ? eq(transactionSchema.account_id, accountID)
     : null;
 
   const rows = await executable
@@ -110,12 +113,12 @@ export const aggregateTransactionsByCategory = async (
     .from(transactionSchema)
     .leftJoin(
       categorySchema,
-      eq(transactionSchema.categoryID, categorySchema.id),
+      eq(transactionSchema.category_id, categorySchema.id),
     )
     .where(
       queryBuilder("and", confirmUser, filterFrom, filterTo, filterAccount),
     )
-    .groupBy(transactionSchema.categoryID);
+    .groupBy(transactionSchema.category_id);
 
   return rows;
 };
@@ -135,7 +138,7 @@ export const patchTransaction = async (
 
     if (!originalTransaction) return null;
 
-    const nextAccount = updates.accountID ?? originalTransaction.accountID;
+    const nextAccount = updates.account_id ?? originalTransaction.account_id;
     const nextInflow = updates.cent_inflow ?? originalTransaction.cent_inflow;
     const nextOutflow =
       updates.cent_outflow ?? originalTransaction.cent_outflow;
@@ -159,11 +162,11 @@ export const patchTransaction = async (
       cent_outflow: nextOutflow,
     };
 
-    if (nextAccount === originalTransaction.accountID) {
+    if (nextAccount === originalTransaction.account_id) {
       await updateBalance(nextAccount, userID, nextDelta - oldDelta, atomic);
     } else {
       await updateBalance(
-        originalTransaction.accountID,
+        originalTransaction.account_id,
         userID,
         -oldDelta,
         atomic,
@@ -178,7 +181,7 @@ export const patchTransaction = async (
         .where(
           and(
             eq(transactionSchema.id, transactionID),
-            eq(transactionSchema.userID, userID),
+            eq(transactionSchema.user_id, userID),
           ),
         )
         .returning(transactionOutputSchema)
@@ -198,14 +201,14 @@ export const deleteTransaction = async (
         .where(
           and(
             eq(transactionSchema.id, transactionID),
-            eq(transactionSchema.userID, userID),
+            eq(transactionSchema.user_id, userID),
           ),
         )
         .returning(transactionOutputSchema)
     )[0];
 
     await updateBalance(
-      transaction.accountID,
+      transaction.account_id,
       userID,
       -returnSignedInflowOrOutflow(
         transaction.cent_inflow,
@@ -228,7 +231,7 @@ export const deleteTransactions = async (
       .delete(transactionSchema)
       .where(
         and(
-          eq(transactionSchema.userID, userID),
+          eq(transactionSchema.user_id, userID),
           inArray(transactionSchema.id, transactionIDs),
         ),
       )
@@ -240,7 +243,7 @@ export const deleteTransactions = async (
 
     for (const t of transactions) {
       const delta = returnSignedInflowOrOutflow(t.cent_inflow, t.cent_outflow);
-      perAccount.set(t.accountID, (perAccount.get(t.accountID) ?? 0) + delta);
+      perAccount.set(t.account_id, (perAccount.get(t.account_id) ?? 0) + delta);
     }
 
     for (const [accountID, sumDelta] of perAccount) {

@@ -37,7 +37,7 @@ categoryRouter.post("/", async (req, res) => {
 
       categories.push({
         name,
-        userID: req.auth?.id!,
+        user_id: req.auth?.id!,
       });
     }
 

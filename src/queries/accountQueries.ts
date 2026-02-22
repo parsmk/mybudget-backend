@@ -24,7 +24,7 @@ export const getAccounts = async (
   return await executable
     .select(accountOutputSchema)
     .from(accountSchema)
-    .where(eq(accountSchema.userID, userID));
+    .where(eq(accountSchema.user_id, userID));
 };
 
 export const getAccount = async (
@@ -37,7 +37,7 @@ export const getAccount = async (
       .select(accountOutputSchema)
       .from(accountSchema)
       .where(
-        and(eq(accountSchema.userID, userID), eq(accountSchema.id, accountID)),
+        and(eq(accountSchema.user_id, userID), eq(accountSchema.id, accountID)),
       )
   )[0];
 };
@@ -53,7 +53,7 @@ export const patchAccount = async (
       .update(accountSchema)
       .set(updates)
       .where(
-        and(eq(accountSchema.userID, userID), eq(accountSchema.id, accountID)),
+        and(eq(accountSchema.user_id, userID), eq(accountSchema.id, accountID)),
       )
       .returning(accountOutputSchema)
   )[0];
@@ -72,7 +72,7 @@ export const updateBalance = async (
       cent_balance: sql`${accountSchema.cent_balance} + ${balanceChange}`,
     })
     .where(
-      and(eq(accountSchema.id, accountID), eq(accountSchema.userID, userID)),
+      and(eq(accountSchema.id, accountID), eq(accountSchema.user_id, userID)),
     );
 };
 
@@ -85,7 +85,7 @@ export const deleteAccount = async (
     await executable
       .delete(accountSchema)
       .where(
-        and(eq(accountSchema.userID, userID), eq(accountSchema.id, accountID)),
+        and(eq(accountSchema.user_id, userID), eq(accountSchema.id, accountID)),
       )
       .returning(accountOutputSchema)
   )[0];

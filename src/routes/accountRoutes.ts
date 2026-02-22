@@ -46,7 +46,7 @@ accountRouter.post("/", async (req, res) => {
         name,
         cent_balance: Math.round(balance * 100),
         type,
-        userID: req.auth?.id!,
+        user_id: req.auth?.id!,
       });
     }
 

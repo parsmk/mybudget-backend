@@ -12,7 +12,7 @@ import { uuidPK } from "../utils/models";
 export const categorySchema = sqliteTable("category", {
   id: uuidPK(),
   name: text().notNull(),
-  userID: text()
+  user_id: text()
     .notNull()
     .references(() => userSchema.id, { onDelete: "cascade" }),
 });
@@ -22,17 +22,17 @@ export type CategorySelect = InferSelectModel<typeof categorySchema>;
 
 export const categoryInsertSchema = createInsertSchema(categorySchema).omit({
   id: true,
-  userID: true,
+  user_id: true,
 });
 export const bulkCategoryInsertSchema = zod.array(categoryInsertSchema);
 
 export const categorySelectSchema = createSelectSchema(categorySchema).omit({
-  userID: true,
+  user_id: true,
 });
 export const bulkCategorySelectSchema = zod.array(categorySelectSchema);
 
 export const categoryUpdateSchema = createUpdateSchema(categorySchema).omit({
   id: true,
-  userID: true,
+  user_id: true,
 });
 export const bulkCategoryUpdateSchema = zod.array(categoryUpdateSchema);
