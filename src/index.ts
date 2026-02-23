@@ -10,7 +10,7 @@ import { accountRouter } from "./routes/accountRoutes";
 import { ensureAuth } from "./middleware/ensureAuth";
 
 // Config
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 const app = express();
 const CORS = {
   origin: "http://localhost:3000",
