@@ -9,11 +9,13 @@ import { categoryRouter } from "./routes/categoryRoutes";
 import { accountRouter } from "./routes/accountRoutes";
 import { ensureAuth } from "./middleware/ensureAuth";
 
+const isDev = process.env.NODE_ENV === "development";
+
 // Config
 const PORT = process.env.PORT || 5000;
 const app = express();
 const CORS = {
-  origin: "http://localhost:3000",
+  origin: process.env.FRONT_END,
   credentials: true,
 };
 
@@ -21,7 +23,7 @@ const CORS = {
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors(CORS));
-app.use(logEndpoint);
+if (isDev) app.use(logEndpoint);
 
 // Routes
 app.use("/", authRouter);
