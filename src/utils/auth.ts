@@ -2,9 +2,6 @@ import jwt from "jsonwebtoken";
 import { Response } from "express";
 import "dotenv/config";
 
-const isSecure = process.env.NODE_ENV !== "development";
-const isSameSite = process.env.NODE_ENV === "development" ? "lax" : "none";
-
 export type TokenPayload = {
   id: string;
   email: string;
@@ -51,8 +48,9 @@ export const signAccessToken = (res: Response, payload: TokenPayload) => {
 
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
-    secure: isSecure,
-    sameSite: isSameSite,
+    secure: true,
+    sameSite: "lax",
+    domain: ".pmkdevelopment.ca",
     maxAge: computeMS([15, "mins"]),
   });
 
@@ -68,8 +66,9 @@ export const signRefreshToken = (res: Response, payload: TokenPayload) => {
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: isSecure,
-    sameSite: isSameSite,
+    secure: true,
+    sameSite: "lax",
+    domain: ".pmkdevelopment.ca",
     maxAge: computeMS([1, "days"]),
   });
 
