@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "NODE_ENV=development tsx watch ./src/index.ts",
     "build": "tsc",
+    "migration": "npx drizzle-kit migrate",
     "start": "NODE_ENV=production node dist/index.js"
   },
   "devDependencies": {
