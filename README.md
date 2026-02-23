@@ -24,7 +24,13 @@ Follow the `sample.env` file to populate required variables.
 
 Ensure the `.env` file is located in the root directory `./mybudget-backend/.env`
 
-### 4. Start Server
+### 4. Migrate 
+
+Run the migrations for your postgres db
+
+    npm run migrations
+
+### 5. Start Server
 
 Last step is to simply start up the server
 
