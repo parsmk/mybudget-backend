@@ -4,7 +4,6 @@
   "description": "",
   "license": "ISC",
   "author": "Parsa MK",
-  "type": "module",
   "main": "index.ts",
   "scripts": {
     "dev": "tsx watch ./src/index.ts",
