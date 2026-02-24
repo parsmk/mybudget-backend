@@ -10,6 +10,7 @@ import {
   bulkCategorySelectSchema,
   CategoryInsert,
   categoryInsertSchema,
+  CategorySelect,
   categorySelectSchema,
   categoryUpdateSchema,
 } from "../models/category";
@@ -27,11 +28,13 @@ categoryRouter.post("/", async (req, res) => {
     const payload = Array.isArray(req.body) ? req.body : [req.body];
     const categories: CategoryInsert[] = [];
     const errs = [];
-    for (const dp of payload) {
+
+    for (let i = 0; i < payload.length; i++) {
+      const dp = payload[i];
       const parsed = categoryInsertSchema.safeParse({ name: dp.name });
 
       if (!parsed.success) {
-        errs.push(zod.flattenError(parsed.error));
+        errs.push({ index: i, errors: zod.flattenError(parsed.error) });
         continue;
       }
 
@@ -42,11 +45,17 @@ categoryRouter.post("/", async (req, res) => {
         user_id: req.auth?.id!,
       });
     }
+    let uploaded;
+    if (categories.length > 0) uploaded = await createCategories(categories);
 
-    const uploaded = await createCategories(categories);
-
-    const [status, response] = formatCreateResponse(uploaded, errs);
-    return res.status(status).json(response);
+    return res
+      .status(200)
+      .json(
+        formatCreateResponse(
+          uploaded ? bulkCategorySelectSchema.parse(uploaded) : [],
+          errs,
+        ),
+      );
   } catch (error) {
     console.error(error);
     return res.status(500).json(formatErrorResponse("Internal error"));

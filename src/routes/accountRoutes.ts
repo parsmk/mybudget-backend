@@ -17,6 +17,7 @@ import {
   bulkAccountSelectSchema,
   accountUpdateSchema,
   accountSelectSchema,
+  AccountSelect,
 } from "../models/account";
 import { bulkTransactionSelectSchema } from "../models/transaction";
 import { formatCreateResponse, formatErrorResponse } from "../utils/routes";
@@ -32,11 +33,13 @@ accountRouter.post("/", async (req, res) => {
     const payload = Array.isArray(req.body) ? req.body : [req.body];
     const accounts: AccountInsert[] = [];
     const errs = [];
-    for (const dp of payload) {
+
+    for (let i = 0; i < payload.length; i++) {
+      const dp = payload[i];
       const parsed = accountInsertSchema.safeParse(dp);
 
       if (!parsed.success) {
-        errs.push(zod.flattenError(parsed.error));
+        errs.push({ index: i, errors: zod.flattenError(parsed.error) });
         continue;
       }
 
@@ -50,13 +53,17 @@ accountRouter.post("/", async (req, res) => {
       });
     }
 
-    const uploaded = await createAccount(accounts);
+    let uploaded;
+    if (accounts) uploaded = await createAccount(accounts);
 
-    const [status, response] = formatCreateResponse(
-      bulkAccountSelectSchema.parse(uploaded),
-      errs,
-    );
-    return res.status(status).json(response);
+    return res
+      .status(200)
+      .json(
+        formatCreateResponse(
+          uploaded ? bulkAccountSelectSchema.parse(uploaded) : [],
+          errs,
+        ),
+      );
   } catch (error) {
     console.error(error);
     return res.status(500).json(formatErrorResponse("Internal error"));

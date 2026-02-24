@@ -12,7 +12,6 @@ import {
   bulkTransactionSelectSchema,
   TransactionInsert,
   transactionInsertSchema,
-  TransactionSelect,
   transactionSelectSchema,
   transactionUpdateSchema,
 } from "../models/transaction";
@@ -33,11 +32,12 @@ transactionRouter.post("/", async (req, res) => {
     const errs = [];
     const transactions: TransactionInsert[] = [];
 
-    for (const dp of payload) {
+    for (let i = 0; i < payload.length; i++) {
+      const dp = payload[i];
       const parsed = transactionInsertSchema.safeParse(dp);
 
       if (!parsed.success) {
-        errs.push(zod.flattenError(parsed.error));
+        errs.push({ index: i, errors: zod.flattenError(parsed.error) });
         continue;
       }
 
@@ -61,15 +61,18 @@ transactionRouter.post("/", async (req, res) => {
       });
     }
 
-    let uploaded: TransactionSelect[] = [];
+    let uploaded;
     if (transactions.length > 0)
       uploaded = await createTransactions(transactions);
 
-    const [status, response] = formatCreateResponse(
-      bulkTransactionInsertSchema.parse(uploaded),
-      errs,
-    );
-    return res.status(status).json(response);
+    return res
+      .status(200)
+      .json(
+        formatCreateResponse(
+          uploaded ? bulkTransactionInsertSchema.parse(uploaded) : [],
+          errs,
+        ),
+      );
   } catch (error) {
     console.error(error);
     return res.status(500).json(formatErrorResponse("Internal error"));
