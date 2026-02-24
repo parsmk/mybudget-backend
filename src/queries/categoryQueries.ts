@@ -2,8 +2,13 @@ import { eq, and } from "drizzle-orm";
 import { db } from "../services";
 import { CategoryInsert, categorySchema } from "../models/category";
 
-export const createCategories = async (categories: CategoryInsert[]) => {
-  return await db.insert(categorySchema).values(categories).returning();
+export const createCategories = async (
+  categories: CategoryInsert[] | CategoryInsert,
+) => {
+  return await db
+    .insert(categorySchema)
+    .values(Array.isArray(categories) ? categories : [categories])
+    .returning();
 };
 
 export const getCategories = async (userID: string) => {

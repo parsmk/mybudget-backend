@@ -13,11 +13,37 @@ import {
   categorySelectSchema,
   categoryUpdateSchema,
 } from "../models/category";
-import { formatCreateResponse, formatErrorResponse } from "../utils/routes";
+import { formatBulkCreateResponse, formatErrorResponse } from "../utils/routes";
 
 export const categoryRouter = Router();
 
 categoryRouter.post("/", async (req, res) => {
+  try {
+    const parsed = categoryInsertSchema.safeParse(req.body);
+
+    if (!parsed.success)
+      return res.status(400).json(zod.flattenError(parsed.error));
+
+    const { name } = parsed.data;
+
+    const [category] = await createCategories({
+      name,
+      user_id: req.auth?.id!,
+    });
+
+    if (!category)
+      return res
+        .status(400)
+        .json(formatErrorResponse("Error creating category!"));
+
+    return res.status(200).json(category);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json(formatErrorResponse("Internal Error"));
+  }
+});
+
+categoryRouter.post("/bulk", async (req, res) => {
   try {
     if (!req.body)
       return res
@@ -27,11 +53,13 @@ categoryRouter.post("/", async (req, res) => {
     const payload = Array.isArray(req.body) ? req.body : [req.body];
     const categories: CategoryInsert[] = [];
     const errs = [];
-    for (const dp of payload) {
+
+    for (let i = 0; i < payload.length; i++) {
+      const dp = payload[i];
       const parsed = categoryInsertSchema.safeParse({ name: dp.name });
 
       if (!parsed.success) {
-        errs.push(zod.flattenError(parsed.error));
+        errs.push({ index: i, errors: zod.flattenError(parsed.error) });
         continue;
       }
 
@@ -42,11 +70,17 @@ categoryRouter.post("/", async (req, res) => {
         user_id: req.auth?.id!,
       });
     }
+    let uploaded;
+    if (categories.length > 0) uploaded = await createCategories(categories);
 
-    const uploaded = await createCategories(categories);
-
-    const [status, response] = formatCreateResponse(uploaded, errs);
-    return res.status(status).json(response);
+    return res
+      .status(200)
+      .json(
+        formatBulkCreateResponse(
+          uploaded ? bulkCategorySelectSchema.parse(uploaded) : [],
+          errs,
+        ),
+      );
   } catch (error) {
     console.error(error);
     return res.status(500).json(formatErrorResponse("Internal error"));

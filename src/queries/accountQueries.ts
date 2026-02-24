@@ -7,7 +7,7 @@ import {
 import { db } from "../services";
 import { SQLExecutables } from "../utils/models";
 
-export const createAccount = async (
+export const createAccounts = async (
   account: AccountInsert[] | AccountInsert,
   executable: SQLExecutables = db,
 ) => {

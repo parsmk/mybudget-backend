@@ -14,18 +14,18 @@ import {
 } from "../utils/models";
 
 export const createTransactions = async (
-  payload: TransactionInsert[],
+  payload: TransactionInsert[] | TransactionInsert,
   executable: SQLExecutables = db,
 ) => {
   const transactions = await executable.transaction(async (atomic) => {
     const inserted = await atomic
       .insert(transactionSchema)
-      .values(payload)
+      .values(Array.isArray(payload) ? payload : [payload])
       .returning(transactionOutputSchema);
 
     await updateBalance(
-      payload[0].account_id,
-      payload[0].user_id,
+      inserted[0].account_id,
+      inserted[0].user_id,
       inserted.reduce(
         (acc, tr) =>
           (acc += returnSignedInflowOrOutflow(tr.cent_inflow, tr.cent_outflow)),

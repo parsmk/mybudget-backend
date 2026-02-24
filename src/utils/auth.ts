@@ -39,6 +39,10 @@ export const signTokens = (res: Response, payload: TokenPayload) => {
   return [signAccessToken(res, payload), signRefreshToken(res, payload)];
 };
 
+const domain =
+  process.env.NODE_ENV === "development" ? undefined : ".pmkdevelopment.ca";
+const secure = process.env.NODE_ENV !== "development";
+
 export const signAccessToken = (res: Response, payload: TokenPayload) => {
   const accessToken = jwt.sign(
     { id: payload.id, email: payload.email },
@@ -48,9 +52,9 @@ export const signAccessToken = (res: Response, payload: TokenPayload) => {
 
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
-    secure: true,
+    secure,
     sameSite: "lax",
-    domain: ".pmkdevelopment.ca",
+    domain,
     maxAge: computeMS([15, "mins"]),
   });
 
@@ -66,9 +70,9 @@ export const signRefreshToken = (res: Response, payload: TokenPayload) => {
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: true,
+    secure,
     sameSite: "lax",
-    domain: ".pmkdevelopment.ca",
+    domain,
     maxAge: computeMS([1, "days"]),
   });
 

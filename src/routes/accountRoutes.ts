@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z as zod } from "zod";
 import {
-  createAccount,
+  createAccounts,
   deleteAccount,
   getAccount,
   getAccounts,
@@ -19,12 +19,40 @@ import {
   accountSelectSchema,
 } from "../models/account";
 import { bulkTransactionSelectSchema } from "../models/transaction";
-import { formatCreateResponse, formatErrorResponse } from "../utils/routes";
+import { formatBulkCreateResponse, formatErrorResponse } from "../utils/routes";
 import { dateField } from "../utils/models";
 
 export const accountRouter = Router();
 
 accountRouter.post("/", async (req, res) => {
+  try {
+    const parsed = accountInsertSchema.safeParse(req.body);
+
+    if (!parsed.success)
+      return res.status(400).json(zod.flattenError(parsed.error));
+
+    const { name, balance, type } = parsed.data;
+
+    const [account] = await createAccounts({
+      name,
+      cent_balance: Math.round(balance * 100),
+      type,
+      user_id: req.auth?.id!,
+    });
+
+    if (!account)
+      return res
+        .status(400)
+        .json(formatErrorResponse("Error creating account!"));
+
+    return res.status(200).json(account);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json(formatErrorResponse("Internal Error"));
+  }
+});
+
+accountRouter.post("/bulk", async (req, res) => {
   try {
     if (!req.body)
       return res.status(400).json(formatErrorResponse("No accounts supplied"));
@@ -32,11 +60,13 @@ accountRouter.post("/", async (req, res) => {
     const payload = Array.isArray(req.body) ? req.body : [req.body];
     const accounts: AccountInsert[] = [];
     const errs = [];
-    for (const dp of payload) {
+
+    for (let i = 0; i < payload.length; i++) {
+      const dp = payload[i];
       const parsed = accountInsertSchema.safeParse(dp);
 
       if (!parsed.success) {
-        errs.push(zod.flattenError(parsed.error));
+        errs.push({ index: i, errors: zod.flattenError(parsed.error) });
         continue;
       }
 
@@ -50,13 +80,17 @@ accountRouter.post("/", async (req, res) => {
       });
     }
 
-    const uploaded = await createAccount(accounts);
+    let uploaded;
+    if (accounts) uploaded = await createAccounts(accounts);
 
-    const [status, response] = formatCreateResponse(
-      bulkAccountSelectSchema.parse(uploaded),
-      errs,
-    );
-    return res.status(status).json(response);
+    return res
+      .status(200)
+      .json(
+        formatBulkCreateResponse(
+          uploaded ? bulkAccountSelectSchema.parse(uploaded) : [],
+          errs,
+        ),
+      );
   } catch (error) {
     console.error(error);
     return res.status(500).json(formatErrorResponse("Internal error"));
