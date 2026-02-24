@@ -38,4 +38,4 @@ export const dateField = zod
       dt.getUTCMonth() === m - 1 &&
       dt.getUTCDate() === d
     );
-  }, "Invalid calendar date");
+  }, "Invalid calendar date. Check to see if you've selected the correct Date format!");
