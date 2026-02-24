@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z as zod } from "zod";
 import {
-  createAccount,
+  createAccounts,
   deleteAccount,
   getAccount,
   getAccounts,
@@ -17,15 +17,42 @@ import {
   bulkAccountSelectSchema,
   accountUpdateSchema,
   accountSelectSchema,
-  AccountSelect,
 } from "../models/account";
 import { bulkTransactionSelectSchema } from "../models/transaction";
-import { formatCreateResponse, formatErrorResponse } from "../utils/routes";
+import { formatBulkCreateResponse, formatErrorResponse } from "../utils/routes";
 import { dateField } from "../utils/models";
 
 export const accountRouter = Router();
 
 accountRouter.post("/", async (req, res) => {
+  try {
+    const parsed = accountInsertSchema.safeParse(req.body);
+
+    if (!parsed.success)
+      return res.status(400).json(zod.flattenError(parsed.error));
+
+    const { name, balance, type } = parsed.data;
+
+    const [account] = await createAccounts({
+      name,
+      cent_balance: Math.round(balance * 100),
+      type,
+      user_id: req.auth?.id!,
+    });
+
+    if (!account)
+      return res
+        .status(400)
+        .json(formatErrorResponse("Error creating account!"));
+
+    return res.status(200).json(account);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json(formatErrorResponse("Internal Error"));
+  }
+});
+
+accountRouter.post("/bulk", async (req, res) => {
   try {
     if (!req.body)
       return res.status(400).json(formatErrorResponse("No accounts supplied"));
@@ -54,12 +81,12 @@ accountRouter.post("/", async (req, res) => {
     }
 
     let uploaded;
-    if (accounts) uploaded = await createAccount(accounts);
+    if (accounts) uploaded = await createAccounts(accounts);
 
     return res
       .status(200)
       .json(
-        formatCreateResponse(
+        formatBulkCreateResponse(
           uploaded ? bulkAccountSelectSchema.parse(uploaded) : [],
           errs,
         ),

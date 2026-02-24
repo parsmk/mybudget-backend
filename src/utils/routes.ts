@@ -9,7 +9,7 @@ type CreateResponse = {
   };
 };
 
-export const formatCreateResponse = (
+export const formatBulkCreateResponse = (
   uploaded: any[] = [],
   errors: any[] = [],
 ): CreateResponse => {

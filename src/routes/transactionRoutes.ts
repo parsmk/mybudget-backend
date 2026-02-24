@@ -15,12 +15,44 @@ import {
   transactionSelectSchema,
   transactionUpdateSchema,
 } from "../models/transaction";
-import { formatCreateResponse, formatErrorResponse } from "../utils/routes";
+import { formatBulkCreateResponse, formatErrorResponse } from "../utils/routes";
 import { dateField } from "../utils/models";
 
 export const transactionRouter = Router();
 
 transactionRouter.post("/", async (req, res) => {
+  try {
+    const parsed = transactionInsertSchema.safeParse(req.body);
+
+    if (!parsed.success)
+      return res.status(400).json(zod.flattenError(parsed.error));
+
+    const { date, payee, account_id, category_id, inflow, outflow } =
+      parsed.data;
+
+    const [transaction] = await createTransactions({
+      date,
+      payee,
+      cent_inflow: inflow ? Math.round(inflow * 100) : undefined,
+      cent_outflow: outflow ? Math.round(outflow * 100) : undefined,
+      account_id,
+      category_id,
+      user_id: req.auth?.id!,
+    });
+
+    if (!transaction)
+      return res
+        .status(400)
+        .json(formatErrorResponse("Error creating transaction!"));
+
+    return res.status(200).json(transaction);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json(formatErrorResponse("Internal Error"));
+  }
+});
+
+transactionRouter.post("/bulk", async (req, res) => {
   try {
     const payload = Array.isArray(req.body) ? req.body : [req.body];
 
@@ -41,22 +73,16 @@ transactionRouter.post("/", async (req, res) => {
         continue;
       }
 
-      const {
-        date,
-        payee,
-        account_id: accountID,
-        category_id: categoryID,
-        inflow,
-        outflow,
-      } = parsed.data;
+      const { date, payee, account_id, category_id, inflow, outflow } =
+        parsed.data;
 
       transactions.push({
         date,
         cent_inflow: inflow ? Math.round(inflow * 100) : undefined,
         cent_outflow: outflow ? Math.round(outflow * 100) : undefined,
         payee,
-        account_id: accountID,
-        category_id: categoryID,
+        account_id,
+        category_id,
         user_id: req.auth?.id!,
       });
     }
@@ -68,7 +94,7 @@ transactionRouter.post("/", async (req, res) => {
     return res
       .status(200)
       .json(
-        formatCreateResponse(
+        formatBulkCreateResponse(
           uploaded ? bulkTransactionInsertSchema.parse(uploaded) : [],
           errs,
         ),
