@@ -12,7 +12,7 @@ import {
 } from "drizzle-orm/zod";
 import { z as zod } from "zod";
 import { userSchema } from "./user";
-import { categorySchema } from "./category";
+import { categorySchema, categorySelectSchema } from "./category";
 import { accountSchema } from "./account";
 import { dateField } from "../utils/models";
 
@@ -96,12 +96,12 @@ export const transactionInsertSchema = createInsertSchema(transactionSchema, {
 export const bulkTransactionInsertSchema = zod.array(transactionInsertSchema);
 
 export const transactionSelectSchema = createSelectSchema(transactionSchema)
-  .extend(commonExtends)
+  .extend({ category: categorySelectSchema.nullable(), ...commonExtends })
   .omit(commonOmits);
 export const bulkTransactionSelectSchema = zod.array(transactionSelectSchema);
 
 export const transactionUpdateSchema = createUpdateSchema(transactionSchema, {
-  date: dateField,
+  date: dateField.optional(),
 })
   .extend(commonExtends)
   .omit({ id: true, ...commonOmits })

@@ -144,22 +144,16 @@ transactionRouter.patch<{ id: string }>("/:id", async (req, res) => {
     if (!parsed.success)
       return res.status(400).json(zod.flattenError(parsed.error));
 
-    const {
-      date,
-      payee,
-      account_id: accountID,
-      inflow,
-      outflow,
-      category_id: categoryID,
-    } = parsed.data;
+    const { date, payee, account_id, inflow, outflow, category_id } =
+      parsed.data;
 
     const transaction = await patchTransaction(req.params.id, req.auth?.id!, {
       date,
       payee,
-      account_id: accountID,
+      account_id,
       cent_inflow: inflow ? Math.round(Number(inflow) * 100) : undefined,
       cent_outflow: outflow ? Math.round(Number(outflow) * 100) : undefined,
-      category_id: categoryID,
+      category_id,
     });
 
     if (!transaction)
