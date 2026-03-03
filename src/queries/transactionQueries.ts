@@ -198,17 +198,15 @@ export const deleteTransaction = async (
   executable: SQLExecutables = db,
 ) => {
   return await executable.transaction(async (atomic) => {
-    const transaction = (
-      await atomic
-        .delete(transactionSchema)
-        .where(
-          and(
-            eq(transactionSchema.id, transactionID),
-            eq(transactionSchema.user_id, userID),
-          ),
-        )
-        .returning(transactionOutputSchema)
-    )[0];
+    const [transaction] = await atomic
+      .delete(transactionSchema)
+      .where(
+        and(
+          eq(transactionSchema.id, transactionID),
+          eq(transactionSchema.user_id, userID),
+        ),
+      )
+      .returning(transactionOutputSchema);
 
     await updateBalance(
       transaction.account_id,

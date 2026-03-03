@@ -96,7 +96,10 @@ export const transactionInsertSchema = createInsertSchema(transactionSchema, {
 export const bulkTransactionInsertSchema = zod.array(transactionInsertSchema);
 
 export const transactionSelectSchema = createSelectSchema(transactionSchema)
-  .extend({ category: categorySelectSchema.nullable(), ...commonExtends })
+  .extend({
+    category: categorySelectSchema.nullable().optional(),
+    ...commonExtends,
+  })
   .omit(commonOmits);
 export const bulkTransactionSelectSchema = zod.array(transactionSelectSchema);
 
