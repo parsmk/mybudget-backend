@@ -10,7 +10,7 @@ import {
   createSelectSchema,
   createUpdateSchema,
 } from "drizzle-orm/zod";
-import { optional, string, z as zod } from "zod";
+import { z as zod } from "zod";
 import { userSchema } from "./user";
 import { categorySchema, categorySelectSchema } from "./category";
 import { accountSchema } from "./account";
@@ -51,6 +51,8 @@ export const transactionSchema = pgTable(
 
 export type TransactionInsert = InferInsertModel<typeof transactionSchema>;
 export type TransactionSelect = InferSelectModel<typeof transactionSchema>;
+export type TransactionPatch = Pick<TransactionSelect, "id"> &
+  Omit<Partial<TransactionInsert>, "user_id">;
 
 const commonExtends = {
   inflow: zod.preprocess(
