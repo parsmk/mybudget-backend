@@ -10,7 +10,7 @@ import {
   createSelectSchema,
   createUpdateSchema,
 } from "drizzle-orm/zod";
-import { z as zod } from "zod";
+import { optional, string, z as zod } from "zod";
 import { userSchema } from "./user";
 import { categorySchema, categorySelectSchema } from "./category";
 import { accountSchema } from "./account";
@@ -117,7 +117,9 @@ export const transactionUpdateSchema = createUpdateSchema(transactionSchema, {
       });
     }
   });
-export const bulkTransactionUpdatSchema = zod.array(transactionUpdateSchema);
+export const bulkTransactionUpdateSchema = transactionUpdateSchema.extend({
+  id: zod.string(),
+});
 
 export const transactionOutputSchema = {
   ...getColumns(transactionSchema),

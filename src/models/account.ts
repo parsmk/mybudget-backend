@@ -38,7 +38,6 @@ export const accountInsertSchema = createInsertSchema(accountSchema, {
 })
   .extend(commitExtends)
   .omit({ id: true, ...commonOmits });
-export const bulkAccountInsertSchema = zod.array(accountInsertSchema);
 
 export const accountSelectSchema = createSelectSchema(accountSchema)
   .extend(commitExtends)
@@ -50,7 +49,9 @@ export const accountUpdateSchema = createUpdateSchema(accountSchema, {
 })
   .extend(commitExtends)
   .omit({ id: true, ...commonOmits });
-export const bulkAccountUpdateSchema = zod.array(accountUpdateSchema);
+export const bulkAccountUpdateSchema = accountUpdateSchema.extend({
+  id: zod.string(),
+});
 
 export const accountOutputSchema = {
   ...getColumns(accountSchema),

@@ -25,7 +25,6 @@ export const categoryInsertSchema = createInsertSchema(categorySchema).omit({
   id: true,
   ...commonOmits,
 });
-export const bulkCategoryInsertSchema = zod.array(categoryInsertSchema);
 
 export const categorySelectSchema =
   createSelectSchema(categorySchema).omit(commonOmits);
@@ -35,4 +34,6 @@ export const categoryUpdateSchema = createUpdateSchema(categorySchema).omit({
   id: true,
   ...commonOmits,
 });
-export const bulkCategoryUpdateSchema = zod.array(categoryUpdateSchema);
+export const bulkCategoryUpdateSchema = categoryUpdateSchema.extend({
+  id: zod.string(),
+});
