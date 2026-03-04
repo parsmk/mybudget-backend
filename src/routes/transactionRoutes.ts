@@ -7,7 +7,7 @@ import {
   patchTransaction,
   deleteTransaction,
   deleteTransactions,
-  patchTransactions,
+  patchTransactionsByAccountID,
   getTransactionsByIds,
 } from "../queries/transactionQueries";
 
@@ -22,10 +22,6 @@ import {
 
 import { formatBulkCreateResponse, formatErrorResponse } from "../utils/routes";
 import { dateField } from "../utils/models";
-import {
-  parseTXPatchBody,
-  validateFlowConstraints,
-} from "../utils/transaction";
 
 export const transactionRouter = Router();
 
@@ -177,70 +173,6 @@ transactionRouter.patch<{ id: string }>("/:id", async (req, res) => {
   }
 });
 
-transactionRouter.patch("/bulk", async (req, res) => {
-  try {
-    const payload = Array.isArray(req.body) ? req.body : [req.body];
-
-    const {
-      errs: errors,
-      txs: transactions,
-      txFlowChanged,
-    } = parseTXPatchBody(payload);
-
-    if (txFlowChanged.size > 0) {
-      const txToTest = await getTransactionsByIds(
-        req.auth?.id!,
-        Array.from(txFlowChanged.keys()),
-      );
-      const { txs, errs } = validateFlowConstraints(txToTest, txFlowChanged);
-      transactions.push(...txs);
-      errors.push(...errs);
-    }
-
-    const balanceDelta = transactions.reduce(
-      (acc, t) => acc + (t.cent_inflow ?? 0) + (t.cent_outflow ?? 0),
-      0,
-    );
-
-    let uploaded;
-    if (transactions.length > 0)
-      uploaded = await patchTransactions(
-        transactions,
-        balanceDelta,
-        req.auth?.id!,
-        transactions[0].account_id!,
-      );
-
-    return res
-      .status(200)
-      .json(
-        formatBulkCreateResponse(
-          uploaded ? bulkTransactionInsertSchema.parse(uploaded) : [],
-          errors,
-        ),
-      );
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json(formatErrorResponse("Internal error"));
-  }
-});
-
-transactionRouter.delete<{ id: string }>("/:id", async (req, res) => {
-  try {
-    const transaction = await deleteTransaction(req.params.id, req.auth?.id!);
-
-    if (!transaction)
-      return res
-        .status(404)
-        .json(formatErrorResponse("Could not find transaction"));
-
-    return res.status(200).json(transactionSelectSchema.parse(transaction));
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json(formatErrorResponse("Internal error"));
-  }
-});
-
 transactionRouter.delete("/bulk", async (req, res) => {
   try {
     const ids = req.body;
@@ -268,6 +200,22 @@ transactionRouter.delete("/bulk", async (req, res) => {
     return res
       .status(200)
       .json(bulkTransactionSelectSchema.parse(transactions));
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json(formatErrorResponse("Internal error"));
+  }
+});
+
+transactionRouter.delete<{ id: string }>("/:id", async (req, res) => {
+  try {
+    const transaction = await deleteTransaction(req.params.id, req.auth?.id!);
+
+    if (!transaction)
+      return res
+        .status(404)
+        .json(formatErrorResponse("Could not find transaction"));
+
+    return res.status(200).json(transactionSelectSchema.parse(transaction));
   } catch (error) {
     console.error(error);
     return res.status(500).json(formatErrorResponse("Internal error"));
