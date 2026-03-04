@@ -1,12 +1,16 @@
 import { Router } from "express";
 import { z as zod } from "zod";
+
 import {
   createTransactions,
   getTransactions,
   patchTransaction,
   deleteTransaction,
   deleteTransactions,
+  patchTransactionsByAccountID,
+  getTransactionsByIds,
 } from "../queries/transactionQueries";
+
 import {
   bulkTransactionInsertSchema,
   bulkTransactionSelectSchema,
@@ -15,6 +19,7 @@ import {
   transactionSelectSchema,
   transactionUpdateSchema,
 } from "../models/transaction";
+
 import { formatBulkCreateResponse, formatErrorResponse } from "../utils/routes";
 import { dateField } from "../utils/models";
 
@@ -168,7 +173,7 @@ transactionRouter.patch<{ id: string }>("/:id", async (req, res) => {
   }
 });
 
-transactionRouter.delete("/", async (req, res) => {
+transactionRouter.delete("/bulk", async (req, res) => {
   try {
     const ids = req.body;
 

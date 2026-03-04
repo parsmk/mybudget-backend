@@ -4,6 +4,7 @@ import { categorySchema } from "../models/category";
 import {
   TransactionInsert,
   transactionOutputSchema,
+  TransactionPatch,
   transactionSchema,
 } from "../models/transaction";
 import { db } from "../services";
@@ -38,6 +39,23 @@ export const createTransactions = async (
   });
 
   return transactions;
+};
+
+export const getTransactionsByIds = async (
+  userID: string,
+  ids: string[],
+  executable: SQLExecutables = db,
+) => {
+  return await executable
+    .select()
+    .from(transactionSchema)
+    .where(
+      queryBuilder(
+        "and",
+        eq(transactionSchema.user_id, userID),
+        inArray(transactionSchema.id, ids),
+      ),
+    );
 };
 
 export const getTransactions = async (
@@ -126,10 +144,42 @@ export const aggregateTransactionsByCategory = async (
   return rows;
 };
 
+export const patchTransactionsByAccountID = async (
+  transactions: TransactionPatch[],
+  totalDelta: number,
+  userID: string,
+  accountID: string,
+  executable: SQLExecutables = db,
+) => {
+  return await executable.transaction(async (atomic) => {
+    const output = await Promise.all(
+      transactions.map(async ({ id, ...data }) => {
+        const [transaction] = await atomic
+          .update(transactionSchema)
+          .set(data)
+          .where(
+            queryBuilder(
+              "and",
+              eq(transactionSchema.id, id),
+              eq(transactionSchema.user_id, userID),
+            ),
+          )
+          .returning();
+
+        return transaction;
+      }),
+    );
+
+    await updateBalance(accountID, userID, totalDelta, atomic);
+
+    return output.flat();
+  });
+};
+
 export const patchTransaction = async (
   transactionID: string,
   userID: string,
-  updates: Partial<Omit<TransactionInsert, "id" | "userID">>,
+  updates: Omit<TransactionPatch, "id">,
   executable: SQLExecutables = db,
 ) => {
   return await executable.transaction(async (atomic) => {
@@ -139,7 +189,7 @@ export const patchTransaction = async (
       atomic,
     );
 
-    if (!originalTransaction) return null;
+    if (!originalTransaction) throw new Error("Transaction not found");
 
     const nextAccount = updates.account_id ?? originalTransaction.account_id;
     const nextInflow = updates.cent_inflow ?? originalTransaction.cent_inflow;
