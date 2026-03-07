@@ -7,15 +7,16 @@ import {
   patchTransaction,
   deleteTransaction,
   deleteTransactions,
-  patchTransactionsByAccountID,
-  getTransactionsByIds,
+  patchTransactions,
 } from "../queries/transactionQueries";
 
 import {
   bulkTransactionInsertSchema,
   bulkTransactionSelectSchema,
+  bulkTransactionUpdateSchema,
   TransactionInsert,
   transactionInsertSchema,
+  TransactionPatch,
   transactionSelectSchema,
   transactionUpdateSchema,
 } from "../models/transaction";
@@ -136,6 +137,60 @@ transactionRouter.get("/", async (req, res) => {
     return res
       .status(200)
       .json(bulkTransactionSelectSchema.parse(transactions));
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json(formatErrorResponse("Internal error"));
+  }
+});
+
+transactionRouter.patch("/bulk", async (req, res) => {
+  try {
+    const payload = Array.isArray(req.body) ? req.body : [req.body];
+
+    const errors: any[] = [];
+    const transactions: TransactionPatch[] = [];
+    for (let i = 0; i < payload.length; i++) {
+      const dp = payload[i];
+      const parsed = bulkTransactionUpdateSchema.safeParse(dp);
+
+      if (!parsed.success) {
+        errors.push({ index: i, errors: zod.flattenError(parsed.error) });
+        continue;
+      }
+
+      const { id, date, inflow, outflow, payee, account_id, category_id } =
+        parsed.data;
+      const cent_inflow = inflow ? Math.round(Number(inflow) * 100) : undefined;
+      const cent_outflow = outflow
+        ? Math.round(Number(outflow) * 100)
+        : undefined;
+
+      const transaction = {
+        id,
+        date,
+        cent_inflow,
+        cent_outflow,
+        payee,
+        account_id,
+        category_id,
+      };
+
+      transactions.push(transaction);
+    }
+
+    const uploaded =
+      transactions.length > 0
+        ? await patchTransactions(transactions, req.auth?.id!)
+        : [];
+
+    return res
+      .status(200)
+      .json(
+        formatBulkCreateResponse(
+          uploaded ? bulkTransactionSelectSchema.parse(uploaded) : [],
+          errors,
+        ),
+      );
   } catch (error) {
     console.error(error);
     return res.status(500).json(formatErrorResponse("Internal error"));

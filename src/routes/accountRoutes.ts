@@ -10,8 +10,6 @@ import {
 import {
   aggregateTransactionsByCategory,
   getTransactions,
-  getTransactionsByIds,
-  patchTransactionsByAccountID,
 } from "../queries/transactionQueries";
 import {
   AccountInsert,
@@ -22,11 +20,7 @@ import {
 } from "../models/account";
 import { bulkTransactionSelectSchema } from "../models/transaction";
 import { formatBulkCreateResponse, formatErrorResponse } from "../utils/routes";
-import { dateField, returnSignedInflowOrOutflow } from "../utils/models";
-import {
-  parseTXPatchBody,
-  validateFlowConstraints,
-} from "../utils/transaction";
+import { dateField } from "../utils/models";
 
 export const accountRouter = Router();
 
@@ -194,61 +188,6 @@ accountRouter.get<{ id: string }>("/:id/analytics", async (req, res) => {
     });
 
     return res.status(200).json(output);
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json(formatErrorResponse("Internal error"));
-  }
-});
-
-accountRouter.patch<{ id: string }>("/:id/transactions", async (req, res) => {
-  try {
-    const payload = Array.isArray(req.body) ? req.body : [req.body];
-
-    console.log("here");
-
-    const {
-      errs: errors,
-      txs: transactions,
-      txFlowChanged,
-    } = parseTXPatchBody(payload);
-
-    if (txFlowChanged.size > 0) {
-      const txToTest = await getTransactionsByIds(
-        req.auth?.id!,
-        Array.from(txFlowChanged.keys()),
-      );
-      const { txs, errs } = validateFlowConstraints(txToTest, txFlowChanged);
-      transactions.push(...txs);
-      errors.push(...errs);
-    }
-
-    const balanceDelta = transactions.reduce(
-      (acc, t) =>
-        acc +
-        returnSignedInflowOrOutflow(
-          t.cent_inflow ?? null,
-          t.cent_outflow ?? null,
-        ),
-      0,
-    );
-
-    let uploaded;
-    if (transactions.length > 0)
-      uploaded = await patchTransactionsByAccountID(
-        transactions,
-        balanceDelta,
-        req.auth?.id!,
-        req.params.id,
-      );
-
-    return res
-      .status(200)
-      .json(
-        formatBulkCreateResponse(
-          uploaded ? bulkTransactionSelectSchema.parse(uploaded) : [],
-          errors,
-        ),
-      );
   } catch (error) {
     console.error(error);
     return res.status(500).json(formatErrorResponse("Internal error"));

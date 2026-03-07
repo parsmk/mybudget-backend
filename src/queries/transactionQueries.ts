@@ -144,36 +144,16 @@ export const aggregateTransactionsByCategory = async (
   return rows;
 };
 
-export const patchTransactionsByAccountID = async (
+export const patchTransactions = async (
   transactions: TransactionPatch[],
-  totalDelta: number,
   userID: string,
-  accountID: string,
   executable: SQLExecutables = db,
 ) => {
-  return await executable.transaction(async (atomic) => {
-    const output = await Promise.all(
-      transactions.map(async ({ id, ...data }) => {
-        const [transaction] = await atomic
-          .update(transactionSchema)
-          .set(data)
-          .where(
-            queryBuilder(
-              "and",
-              eq(transactionSchema.id, id),
-              eq(transactionSchema.user_id, userID),
-            ),
-          )
-          .returning();
-
-        return transaction;
-      }),
-    );
-
-    await updateBalance(accountID, userID, totalDelta, atomic);
-
-    return output.flat();
-  });
+  return await Promise.all(
+    transactions.map(({ id, ...data }) =>
+      patchTransaction(id, userID, data, executable),
+    ),
+  );
 };
 
 export const patchTransaction = async (
